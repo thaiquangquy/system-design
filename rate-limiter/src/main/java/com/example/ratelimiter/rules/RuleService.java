@@ -63,6 +63,7 @@ public class RuleService {
     }
 
     private void publishInvalidation() {
+        ruleCache.invalidate();
         redisTemplate.convertAndSend(INVALIDATION_CHANNEL, "invalidate");
     }
 }
