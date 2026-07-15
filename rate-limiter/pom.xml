@@ -19,7 +19,7 @@
 
     <properties>
         <java.version>21</java.version>
-        <testcontainers.version>1.20.1</testcontainers.version>
+        <testcontainers.version>1.21.3</testcontainers.version>
     </properties>
 
     <dependencies>
@@ -65,6 +65,30 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!--
+                        docker-java (bundled inside testcontainers) resolves the Docker Engine
+                        API version it talks to via the literal key "api.version", read either
+                        as a JVM system property or as a same-named environment variable
+                        (org.testcontainers.shaded.com.github.dockerjava.core.DefaultDockerClientConfig#API_VERSION).
+                        It does NOT read DOCKER_API_VERSION. When "api.version" resolves to
+                        RemoteApiVersion.UNKNOWN_VERSION (i.e. unset), Testcontainers'
+                        DockerClientProviderStrategy#getClientForConfig hardcodes a fallback to
+                        RemoteApiVersion.VERSION_1_32, which this Docker Desktop rejects (its
+                        engine enforces a minimum of API 1.40). Setting the system property here
+                        ensures the forked Surefire JVM sees it regardless of the shell environment.
+                    -->
+                    <systemPropertyVariables>
+                        <api.version>1.41</api.version>
+                    </systemPropertyVariables>
+                    <environmentVariables>
+                        <api.version>1.41</api.version>
+                    </environmentVariables>
+                </configuration>
             </plugin>
         </plugins>
     </build>
