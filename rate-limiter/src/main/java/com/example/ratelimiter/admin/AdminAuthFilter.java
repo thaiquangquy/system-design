@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 
 @Component
 public class AdminAuthFilter extends OncePerRequestFilter {
@@ -25,7 +27,8 @@ public class AdminAuthFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         if (request.getRequestURI().startsWith("/api/v1/rules")) {
             String token = request.getHeader("X-Admin-Token");
-            if (token == null || !token.equals(adminToken)) {
+            if (token == null || !MessageDigest.isEqual(
+                    token.getBytes(StandardCharsets.UTF_8), adminToken.getBytes(StandardCharsets.UTF_8))) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json");
                 response.getWriter().write("{\"error\":\"unauthorized\"}");

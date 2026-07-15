@@ -19,5 +19,6 @@ public abstract class RedisTestSupport {
     static void redisProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.data.redis.host", REDIS::getHost);
         registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(6379));
+        registry.add("ratelimiter.admin.token", () -> "test-token");
     }
 }
