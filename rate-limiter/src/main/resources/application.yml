@@ -1,0 +1,12 @@
+server:
+  port: 8080
+
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+ratelimiter:
+  admin:
+    token: ${ADMIN_TOKEN:change-me}
