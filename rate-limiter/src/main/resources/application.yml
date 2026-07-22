@@ -10,4 +10,4 @@ spring:
 
 ratelimiter:
   admin:
-    token: ${ADMIN_TOKEN}
+    token: ${ADMIN_TOKEN:changeme}

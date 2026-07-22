@@ -4,7 +4,9 @@ package com.example.ratelimiter.admin;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.PrintWriter;
 
@@ -15,7 +17,12 @@ import static org.mockito.Mockito.when;
 
 class AdminAuthFilterTest {
 
-    private final AdminAuthFilter filter = new AdminAuthFilter("secret-token");
+    private final AdminAuthFilter filter = new AdminAuthFilter();
+
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(filter, "adminToken", "secret-token");
+    }
 
     @Test
     void rejectsRequestMissingToken() throws Exception {
