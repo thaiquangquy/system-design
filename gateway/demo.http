@@ -1,0 +1,47 @@
+### === End-to-end gateway demo ===
+### Prereqs: Redis + rate-limiter running on :8080, sample-api on :8081, gateway on :8082.
+### Key format built by the gateway: route:<path-without-leading-slash>:ip:<clientIp>
+### e.g. GET /login from 127.0.0.1 -> route:login:ip:127.0.0.1
+###
+### NOTE on key ordering (route-first): this lets one rule protect a route regardless of
+### caller (e.g. "route:login:" limits everyone hitting /login), but it means there is no
+### single rule that can ban one IP across *all* routes — that would require IP-first
+### ordering instead. This trade-off is intentional; see gateway plan/README for rationale.
+### Also note: a per-IP rule like "route:user:ip:127.0.0.1" has nothing after the IP, so as
+### a *prefix* it would also match a longer IP like 127.0.0.11 — harmless for this
+### single-caller demo, not something to rely on in production.
+
+### Step 1: seed a rule that limits ALL callers hitting /login (route-wide), regardless of IP.
+POST http://localhost:8080/api/v1/rules
+X-Admin-Token: changeme
+Content-Type: application/json
+
+{"keyPrefix": "route:login:", "limit": 3, "windowSeconds": 60}
+
+### Step 2: seed a rule that limits one specific IP calling /user.
+POST http://localhost:8080/api/v1/rules
+X-Admin-Token: changeme
+Content-Type: application/json
+
+{"keyPrefix": "route:user:ip:127.0.0.1", "limit": 2, "windowSeconds": 60}
+
+### Step 3: call the gateway's /login — run this 3 times to see 200s forwarding the sample
+### API's token response, then a 4th time to see 429 (rate limiter denies, gateway
+### short-circuits before calling sample-api). Watch X-RateLimit-Remaining count down.
+GET http://localhost:8082/login
+
+### Step 4: call the gateway's /user — run this 2 times to see 200s forwarding the sample
+### API's user object, then a 3rd time to see 429.
+GET http://localhost:8082/user
+
+### Step 5: a route with no seeded rule is denied by the rate limiter's fail-closed default,
+### and the gateway never calls the sample API for it.
+GET http://localhost:8082/does-not-exist
+
+### Cleanup: remove the seeded rules
+DELETE http://localhost:8080/api/v1/rules/route:login:
+X-Admin-Token: changeme
+
+###
+DELETE http://localhost:8080/api/v1/rules/route:user:ip:127.0.0.1
+X-Admin-Token: changeme
