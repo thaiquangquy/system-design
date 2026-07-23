@@ -31,11 +31,24 @@ public class RateLimitGatewayClient {
 
         try {
             ResponseEntity<Void> response = restTemplate.getForEntity(url, Void.class);
-            return new RateLimitCheckResult(true, HttpStatus.OK, response.getHeaders()));
+            return new RateLimitCheckResult(true, HttpStatus.OK, extractRateLimitHeaders(response.getHeaders()));
         } catch (HttpClientErrorException.TooManyRequests ex) {
-            return new RateLimitCheckResult(false, HttpStatus.TOO_MANY_REQUESTS, response.getHeaders()));
+            return new RateLimitCheckResult(false, HttpStatus.TOO_MANY_REQUESTS, extractRateLimitHeaders(ex.getResponseHeaders()));
         } catch (RestClientException ex) {
             return RateLimitCheckResult.unreachable();
         }
+    }
+
+    private HttpHeaders extractRateLimitHeaders(HttpHeaders source) {
+        HttpHeaders headers = new HttpHeaders();
+        if (source != null) {
+            for (String name : new String[] {HEADER_LIMIT, HEADER_REMAINING, HEADER_RESET}) {
+                String value = source.getFirst(name);
+                if (value != null) {
+                    headers.set(name, value);
+                }
+            }
+        }
+        return headers;
     }
 }

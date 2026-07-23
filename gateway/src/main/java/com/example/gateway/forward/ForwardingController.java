@@ -42,7 +42,15 @@ public class ForwardingController {
         ResponseEntity<byte[]> downstream = forwardToSampleApi(request, path);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.putAll(downstream.getHeaders());
+        downstream.getHeaders().forEach((name, values) -> {
+            if (HttpHeaders.TRANSFER_ENCODING.equalsIgnoreCase(name)
+                    || HttpHeaders.CONTENT_LENGTH.equalsIgnoreCase(name)
+                    || HttpHeaders.CONNECTION.equalsIgnoreCase(name)
+                    || "Keep-Alive".equalsIgnoreCase(name)) {
+                return;
+            }
+            headers.addAll(name, values);
+        });
         headers.putAll(checkResult.rateLimitHeaders());
 
         return ResponseEntity.status(downstream.getStatusCode())
@@ -65,7 +73,7 @@ public class ForwardingController {
         }
 
         byte[] body = request.getInputStream().readAllBytes();
-        HttpEntity<byte[]> entity = new HttpEntity<>(body, headers);
+        HttpEntity<byte[]> entity = body.length > 0 ? new HttpEntity<>(body, headers) : new HttpEntity<>(headers);
         HttpMethod method = HttpMethod.valueOf(request.getMethod());
 
         try {
