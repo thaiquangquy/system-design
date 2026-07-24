@@ -5,8 +5,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class RateLimitKeyBuilder {
 
-    public String build(String clientIp, String path) {
-        return "route:" + sanitizePath(path) + ":ip:" + clientIp;
+    public String build(String path) {
+        return "route:" + sanitizePath(path);
     }
 
     /**

@@ -9,7 +9,7 @@
 - Built with Java 21 and Spring Boot 3.3.
 
 ## gateway
-- Sits in front of `sample-api`. For every request it calls the rate-limiter's `/api/v1/rate-limit/check` endpoint (key = client IP + route), and only forwards the request downstream if allowed; otherwise it returns 429 immediately. Fails closed (503) if the rate limiter is unreachable.
+- Sits in front of `sample-api`. For every request it calls the rate-limiter's `/api/v1/rate-limit/check` endpoint (key = route, ip = client IP, passed as separate params so each IP gets its own quota under one shared per-route rule), and only forwards the request downstream if allowed; otherwise it returns 429 immediately. Fails closed (503) if the rate limiter is unreachable.
 - See [gateway/demo.http](gateway/demo.http) for an end-to-end walkthrough (seed rules, hit endpoints, observe 200→429).
 - Built with Java 21 and Spring Boot 3.3, plain Spring MVC + `RestTemplate` (no Spring Cloud Gateway).
 

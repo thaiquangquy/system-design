@@ -22,10 +22,11 @@ public class RateLimitGatewayClient {
     private final RestTemplate restTemplate;
     private final GatewayProperties properties;
 
-    public RateLimitCheckResult check(String key) {
+    public RateLimitCheckResult check(String key, String ip) {
         String url = UriComponentsBuilder
                 .fromHttpUrl(properties.rateLimiter().baseUrl() + "/api/v1/rate-limit/check")
                 .queryParam("key", key)
+                .queryParam("ip", ip)
                 .encode()
                 .toUriString();
 

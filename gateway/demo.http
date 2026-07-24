@@ -1,47 +1,32 @@
-### === End-to-end gateway demo ===
-### Prereqs: Redis + rate-limiter running on :8080, sample-api on :8081, gateway on :8082.
-### Key format built by the gateway: route:<path-without-leading-slash>:ip:<clientIp>
-### e.g. GET /login from 127.0.0.1 -> route:login:ip:127.0.0.1
-###
-### NOTE on key ordering (route-first): this lets one rule protect a route regardless of
-### caller (e.g. "route:login:" limits everyone hitting /login), but it means there is no
-### single rule that can ban one IP across *all* routes — that would require IP-first
-### ordering instead. This trade-off is intentional; see gateway plan/README for rationale.
-### Also note: a per-IP rule like "route:user:ip:127.0.0.1" has nothing after the IP, so as
-### a *prefix* it would also match a longer IP like 127.0.0.11 — harmless for this
-### single-caller demo, not something to rely on in production.
+### === End-to-end gateway demo: per-IP rate limiting, tested from 2 separate machines ===
+### Run `docker compose up --build` on the host machine, then set @host to its LAN/reachable IP (not "localhost", unless testing from the host itself).
+### Both test machines must hit the gateway directly (no shared NAT/VPN, no X-Forwarded-For support) or they'll look like one IP and share a quota.
+@host = 192.168.70.162
 
-### Step 1: seed a rule that limits ALL callers hitting /login (route-wide), regardless of IP.
-POST http://localhost:8080/api/v1/rules
+### Gateway builds keys as route:<path> (e.g. /login -> route:login) and sends key+caller IP separately to /check; rules are per-route only, no IP in keyPrefix.
+
+### Step 1: seed a rule limiting /login to 3 req/60s per IP — keyPrefix must exactly equal the route key ("route:login", no trailing colon) or it will never match (always 429).
+POST http://{{host}}:8080/api/v1/rules
 X-Admin-Token: changeme
 Content-Type: application/json
 
-{"keyPrefix": "route:login:", "limit": 3, "windowSeconds": 60}
+{"keyPrefix": "route:login", "limit": 3, "windowSeconds": 60}
 
-### Step 2: seed a rule that limits one specific IP calling /user.
-POST http://localhost:8080/api/v1/rules
-X-Admin-Token: changeme
-Content-Type: application/json
+### Step 2 (Machine A): run 3x for 200s counting down Remaining 2,1,0, then a 4th returns 429.
+GET http://{{host}}:8082/login
 
-{"keyPrefix": "route:user:ip:127.0.0.1", "limit": 2, "windowSeconds": 60}
+### Step 3 (Machine B): run the same request — it gets its own fresh quota (200, Remaining: 2), proving the two IPs track independently under one shared rule.
+GET http://{{host}}:8082/login
 
-### Step 3: call the gateway's /login — run this 3 times to see 200s forwarding the sample
-### API's token response, then a 4th time to see 429 (rate limiter denies, gateway
-### short-circuits before calling sample-api). Watch X-RateLimit-Remaining count down.
-GET http://localhost:8082/login
+### Step 4 (optional): a route with no seeded rule is always denied (fail-closed), regardless of caller IP.
+GET http://{{host}}:8082/does-not-exist
 
-### Step 4: call the gateway's /user — run this 2 times to see 200s forwarding the sample
-### API's user object, then a 3rd time to see 429.
-GET http://localhost:8082/user
-
-### Step 5: a route with no seeded rule is denied by the rate limiter's fail-closed default,
-### and the gateway never calls the sample API for it.
-GET http://localhost:8082/does-not-exist
-
-### Cleanup: remove the seeded rules
-DELETE http://localhost:8080/api/v1/rules/route:login:
-X-Admin-Token: changeme
+### Step 5 (optional, single machine): bypass the gateway and call /check directly with explicit ip= values to simulate two callers without a second machine.
+GET http://{{host}}:8080/api/v1/rate-limit/check?key=route:login&ip=1.1.1.1
 
 ###
-DELETE http://localhost:8080/api/v1/rules/route:user:ip:127.0.0.1
+GET http://{{host}}:8080/api/v1/rate-limit/check?key=route:login&ip=2.2.2.2
+
+### Cleanup: remove the seeded rule.
+DELETE http://{{host}}:8080/api/v1/rules/route:login
 X-Admin-Token: changeme

@@ -29,7 +29,7 @@ public class RateLimitService {
     this.slidingWindowScript = script;
   }
 
-  public RateLimitResult check(String key) {
+  public RateLimitResult check(String key, String ip) {
     Optional<Rule> maybeRule = ruleCache.findMatch(key);
     if (maybeRule.isEmpty()) {
       return RateLimitResult.denied(0, 0, 0);
@@ -40,8 +40,9 @@ public class RateLimitService {
     long windowId = now / rule.windowSeconds();
     long elapsed = now - windowId * rule.windowSeconds();
 
-    String currentKey = "ratelimit:cnt:" + key + ":" + windowId;
-    String previousKey = "ratelimit:cnt:" + key + ":" + (windowId - 1);
+    String scopedKey = key + ":ip:" + ip;
+    String currentKey = "ratelimit:cnt:" + scopedKey + ":" + windowId;
+    String previousKey = "ratelimit:cnt:" + scopedKey + ":" + (windowId - 1);
 
     List<Object> result =
         redisTemplate.execute(

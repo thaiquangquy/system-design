@@ -28,7 +28,7 @@ The service is two independent verticals sharing Redis, connected only through a
 ```
 
 - **Rule management** (`rules` package): admins define rate-limit rules — a key prefix, a request limit, and a window in seconds — via a REST API. Rules are persisted as a Redis hash. Every write publishes an invalidation message over Redis pub/sub so all running instances refresh their local rule cache, not just the one that handled the write.
-- **Rate limit check** (`check` package): the hot path. Given a `key` (e.g. an IP or user ID), it finds the longest matching rule prefix (via the 5-second Caffeine cache in front of Redis), then runs a single atomic Lua script against Redis to decide allow/deny and update counters, returning `X-RateLimit-*` headers.
+- **Rate limit check** (`check` package): the hot path. Given a `key` (e.g. a route) and a separate `ip`, it finds the longest matching rule prefix for `key` (via the 5-second Caffeine cache in front of Redis), then runs a single atomic Lua script against Redis — counters scoped by `key` **and** `ip` together — to decide allow/deny and update counters, returning `X-RateLimit-*` headers. Because the counter is scoped per-IP, one rule can cover an entire route while each caller IP tracks its own independent quota.
 - **Sliding window algorithm**: time is bucketed into fixed windows (`now / windowSeconds`). Each check weighs the previous window's count by how much of it still "bleeds" into the current window (`(windowSeconds - elapsed) / windowSeconds`), added to the current window's count. This smooths out the burst-at-boundary problem of naive fixed-window counters, while still being O(1) per request (two `GET`s + one `INCR`, all inside one Lua script for atomicity under concurrency).
 - **Fail-closed matching**: a key with no matching rule is **denied**, not allowed.
 
@@ -40,8 +40,8 @@ src/main/java/com/example/ratelimiter/
 ├── admin/
 │   └── AdminAuthFilter.java        Servlet filter guarding /api/v1/rules/** with X-Admin-Token
 ├── check/                          The rate-limit check vertical
-│   ├── RateLimitController.java    GET /api/v1/rate-limit/check
-│   ├── RateLimitService.java       Looks up rule, runs sliding_window.lua, builds result
+│   ├── RateLimitController.java    GET /api/v1/rate-limit/check?key=...&ip=...
+│   ├── RateLimitService.java       Looks up rule by key, scopes counters by key+ip, runs sliding_window.lua
 │   └── RateLimitResult.java        allowed / limit / remaining / resetSeconds
 ├── rules/                          The rule management vertical
 │   ├── RuleController.java         POST/GET/PUT/DELETE /api/v1/rules/{prefix}
@@ -101,28 +101,28 @@ The app listens on `http://localhost:8080`.
 curl -X POST http://localhost:8080/api/v1/rules \
   -H "X-Admin-Token: changeme" \
   -H "Content-Type: application/json" \
-  -d '{"keyPrefix": "ip:", "limit": 100, "windowSeconds": 60}'
+  -d '{"keyPrefix": "login:", "limit": 100, "windowSeconds": 60}'
 ```
 
-Rule matching is **longest-prefix-wins**: a key like `ip:1.2.3.4` matches the `ip:` rule above, but a more specific rule (e.g. `ip:1.2.3.4`) would take precedence over the broader `ip:` one if both exist.
+Rule matching is **longest-prefix-wins**: a key like `login:` matches the rule above, but a more specific rule (e.g. `login:admin`) would take precedence over the broader `login:` one if both exist. `keyPrefix` identifies a route/resource only — it never encodes IP; each caller's `ip` is a separate dimension applied at check time (see below), so one rule automatically gives every IP hitting that route its own independent quota.
 
 Other admin endpoints (all require `X-Admin-Token`):
 
 ```bash
-curl http://localhost:8080/api/v1/rules -H "X-Admin-Token: changeme"                      # list all rules
-curl http://localhost:8080/api/v1/rules/ip: -H "X-Admin-Token: changeme"                  # get one rule
-curl -X PUT http://localhost:8080/api/v1/rules/ip: -H "X-Admin-Token: changeme" \
-  -H "Content-Type: application/json" -d '{"limit": 200, "windowSeconds": 60}'             # update
-curl -X DELETE http://localhost:8080/api/v1/rules/ip: -H "X-Admin-Token: changeme"        # delete
+curl http://localhost:8080/api/v1/rules -H "X-Admin-Token: changeme"                         # list all rules
+curl http://localhost:8080/api/v1/rules/login: -H "X-Admin-Token: changeme"                  # get one rule
+curl -X PUT http://localhost:8080/api/v1/rules/login: -H "X-Admin-Token: changeme" \
+  -H "Content-Type: application/json" -d '{"limit": 200, "windowSeconds": 60}'                # update
+curl -X DELETE http://localhost:8080/api/v1/rules/login: -H "X-Admin-Token: changeme"        # delete
 ```
 
 ### 2. Check / consume quota (public API, no auth)
 
 ```bash
-curl -i "http://localhost:8080/api/v1/rate-limit/check?key=ip:1.2.3.4"
+curl -i "http://localhost:8080/api/v1/rate-limit/check?key=login:&ip=1.2.3.4"
 ```
 
-Each call both checks **and consumes** one unit of quota (if allowed). Response:
+`key` selects the rule (route/resource); `ip` scopes the counter to that specific caller, so a second caller with a different `ip` against the same `key` gets its own independent quota under the same rule. Each call both checks **and consumes** one unit of quota (if allowed). Response:
 
 - `200 OK` with headers `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` (seconds until the current window ends) — if under the limit.
 - `429 Too Many Requests` with the same headers (`Remaining` at `0`) — if over the limit, or if no rule matches the key at all (fail-closed).

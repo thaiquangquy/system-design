@@ -26,10 +26,10 @@ class RateLimitControllerIT extends RedisTestSupport {
 
     @Test
     void returns200WithHeadersWhenUnderLimit() {
-        ruleService.create("ip:9.9.9.9", 5, 60);
+        ruleService.create("route:login:", 5, 60);
 
         ResponseEntity<Void> response = restTemplate.getForEntity(
-                "http://localhost:" + port + "/api/v1/rate-limit/check?key=ip:9.9.9.9", Void.class);
+                "http://localhost:" + port + "/api/v1/rate-limit/check?key=route:login:&ip=9.9.9.9", Void.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getHeaders().getFirst("X-RateLimit-Limit")).isEqualTo("5");
@@ -39,8 +39,8 @@ class RateLimitControllerIT extends RedisTestSupport {
 
     @Test
     void returns429WhenLimitExceeded() {
-        ruleService.create("ip:8.8.8.8", 1, 60);
-        String checkUrl = "http://localhost:" + port + "/api/v1/rate-limit/check?key=ip:8.8.8.8";
+        ruleService.create("route:user:", 1, 60);
+        String checkUrl = "http://localhost:" + port + "/api/v1/rate-limit/check?key=route:user:&ip=8.8.8.8";
 
         restTemplate.getForEntity(checkUrl, Void.class);
         ResponseEntity<Void> second = restTemplate.getForEntity(checkUrl, Void.class);
@@ -50,9 +50,23 @@ class RateLimitControllerIT extends RedisTestSupport {
     }
 
     @Test
+    void eachIpTracksIndependentlyUnderTheSameRule() {
+        ruleService.create("route:user:", 1, 60);
+        String baseUrl = "http://localhost:" + port + "/api/v1/rate-limit/check?key=route:user:&ip=";
+
+        ResponseEntity<Void> firstIpFirstCall = restTemplate.getForEntity(baseUrl + "5.5.5.5", Void.class);
+        ResponseEntity<Void> firstIpSecondCall = restTemplate.getForEntity(baseUrl + "5.5.5.5", Void.class);
+        ResponseEntity<Void> secondIpFirstCall = restTemplate.getForEntity(baseUrl + "6.6.6.6", Void.class);
+
+        assertThat(firstIpFirstCall.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(firstIpSecondCall.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(secondIpFirstCall.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
     void returns429WhenNoRuleMatchesKey() {
         ResponseEntity<Void> response = restTemplate.getForEntity(
-                "http://localhost:" + port + "/api/v1/rate-limit/check?key=unconfigured:xyz", Void.class);
+                "http://localhost:" + port + "/api/v1/rate-limit/check?key=unconfigured:xyz&ip=1.1.1.1", Void.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
     }

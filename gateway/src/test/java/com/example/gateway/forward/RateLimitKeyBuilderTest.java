@@ -9,12 +9,12 @@ class RateLimitKeyBuilderTest {
     private final RateLimitKeyBuilder builder = new RateLimitKeyBuilder();
 
     @Test
-    void buildsRouteFirstKeyStrippingLeadingSlash() {
-        assertThat(builder.build("127.0.0.1", "/login")).isEqualTo("route:login:ip:127.0.0.1");
+    void buildsRouteKeyStrippingLeadingSlash() {
+        assertThat(builder.build("/login")).isEqualTo("route:login");
     }
 
     @Test
     void replacesNestedSlashesWithDots() {
-        assertThat(builder.build("10.0.0.1", "/api/foo")).isEqualTo("route:api.foo:ip:10.0.0.1");
+        assertThat(builder.build("/api/foo")).isEqualTo("route:api.foo");
     }
 }

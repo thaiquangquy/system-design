@@ -28,27 +28,39 @@ class RateLimitServiceIT extends RedisTestSupport {
 
     @Test
     void allowsRequestsUnderTheLimitAndDeniesOnceExceeded() {
-        ruleService.create("ip:1.1.1.1", 3, 60);
+        ruleService.create("route:login:", 3, 60);
 
-        assertThat(rateLimitService.check("ip:1.1.1.1").allowed()).isTrue();
-        assertThat(rateLimitService.check("ip:1.1.1.1").allowed()).isTrue();
-        assertThat(rateLimitService.check("ip:1.1.1.1").allowed()).isTrue();
+        assertThat(rateLimitService.check("route:login:", "1.1.1.1").allowed()).isTrue();
+        assertThat(rateLimitService.check("route:login:", "1.1.1.1").allowed()).isTrue();
+        assertThat(rateLimitService.check("route:login:", "1.1.1.1").allowed()).isTrue();
 
-        RateLimitResult fourth = rateLimitService.check("ip:1.1.1.1");
+        RateLimitResult fourth = rateLimitService.check("route:login:", "1.1.1.1");
         assertThat(fourth.allowed()).isFalse();
         assertThat(fourth.remaining()).isEqualTo(0);
     }
 
     @Test
+    void eachIpTracksIndependentlyUnderTheSameRule() {
+        ruleService.create("route:signup:", 2, 60);
+
+        assertThat(rateLimitService.check("route:signup:", "11.11.11.11").allowed()).isTrue();
+        assertThat(rateLimitService.check("route:signup:", "11.11.11.11").allowed()).isTrue();
+        assertThat(rateLimitService.check("route:signup:", "11.11.11.11").allowed()).isFalse();
+
+        assertThat(rateLimitService.check("route:signup:", "22.22.22.22").allowed()).isTrue();
+        assertThat(rateLimitService.check("route:signup:", "22.22.22.22").allowed()).isTrue();
+    }
+
+    @Test
     void deniesWhenNoRuleMatchesTheKey() {
-        RateLimitResult result = rateLimitService.check("unconfigured:key");
+        RateLimitResult result = rateLimitService.check("unconfigured:key", "1.1.1.1");
 
         assertThat(result.allowed()).isFalse();
     }
 
     @Test
     void exactlyLimitRequestsAllowedUnderConcurrency() throws InterruptedException {
-        ruleService.create("ip:2.2.2.2", 20, 60);
+        ruleService.create("route:concurrency:", 20, 60);
 
         int threads = 40;
         ExecutorService executor = Executors.newFixedThreadPool(threads);
@@ -56,7 +68,7 @@ class RateLimitServiceIT extends RedisTestSupport {
 
         for (int i = 0; i < threads; i++) {
             executor.submit(() -> {
-                if (rateLimitService.check("ip:2.2.2.2").allowed()) {
+                if (rateLimitService.check("route:concurrency:", "2.2.2.2").allowed()) {
                     allowedCount.incrementAndGet();
                 }
             });
@@ -69,7 +81,7 @@ class RateLimitServiceIT extends RedisTestSupport {
 
     @Test
     void weightedPreviousWindowCountReducesCurrentWindowAllowance() {
-        ruleService.create("ip:3.3.3.3", 10, 100);
+        ruleService.create("route:weighted:", 10, 100);
 
         long windowSeconds = 100;
         long limit = 10;
@@ -89,10 +101,10 @@ class RateLimitServiceIT extends RedisTestSupport {
         long now = System.currentTimeMillis() / 1000;
         long windowId = now / windowSeconds;
         long elapsed = now - windowId * windowSeconds;
-        String previousWindowKey = "ratelimit:cnt:ip:3.3.3.3:" + (windowId - 1);
+        String previousWindowKey = "ratelimit:cnt:route:weighted::ip:3.3.3.3:" + (windowId - 1);
         stringRedisTemplate.opsForValue().set(previousWindowKey, String.valueOf(previousCount));
 
-        RateLimitResult result = rateLimitService.check("ip:3.3.3.3");
+        RateLimitResult result = rateLimitService.check("route:weighted:", "3.3.3.3");
 
         double weightedCount = previousCount * ((windowSeconds - elapsed) / (double) windowSeconds);
         boolean expectedAllowed = weightedCount + 1 <= limit;
@@ -120,14 +132,14 @@ class RateLimitServiceIT extends RedisTestSupport {
         long windowSeconds = 10;
         long limit = 10;
         long previousCount = 100;
-        ruleService.create("ip:4.4.4.4", limit, windowSeconds);
+        ruleService.create("route:overloaded:", limit, windowSeconds);
 
         long now = System.currentTimeMillis() / 1000;
         long windowId = now / windowSeconds;
-        String previousWindowKey = "ratelimit:cnt:ip:4.4.4.4:" + (windowId - 1);
+        String previousWindowKey = "ratelimit:cnt:route:overloaded::ip:4.4.4.4:" + (windowId - 1);
         stringRedisTemplate.opsForValue().set(previousWindowKey, String.valueOf(previousCount));
 
-        RateLimitResult result = rateLimitService.check("ip:4.4.4.4");
+        RateLimitResult result = rateLimitService.check("route:overloaded:", "4.4.4.4");
 
         assertThat(result.allowed()).isFalse();
         assertThat(result.remaining()).isEqualTo(0);

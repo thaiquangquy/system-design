@@ -14,8 +14,8 @@ public class RateLimitController {
     private final RateLimitService rateLimitService;
 
     @GetMapping("/api/v1/rate-limit/check")
-    public ResponseEntity<Void> check(@RequestParam String key) {
-        RateLimitResult result = rateLimitService.check(key);
+    public ResponseEntity<Void> check(@RequestParam String key, @RequestParam String ip) {
+        RateLimitResult result = rateLimitService.check(key, ip);
         HttpStatus status = result.allowed() ? HttpStatus.OK : HttpStatus.TOO_MANY_REQUESTS;
 
         return ResponseEntity.status(status)

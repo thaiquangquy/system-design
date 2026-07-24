@@ -30,9 +30,9 @@ public class ForwardingController {
     @RequestMapping("/**")
     public ResponseEntity<byte[]> forward(HttpServletRequest request) throws IOException {
         String path = request.getRequestURI();
-        String key = keyBuilder.build(request.getRemoteAddr(), path);
+        String key = keyBuilder.build(path);
 
-        RateLimitCheckResult checkResult = rateLimitClient.check(key);
+        RateLimitCheckResult checkResult = rateLimitClient.check(key, request.getRemoteAddr());
         if (!checkResult.allowed()) {
             return ResponseEntity.status(checkResult.status())
                     .headers(checkResult.rateLimitHeaders())

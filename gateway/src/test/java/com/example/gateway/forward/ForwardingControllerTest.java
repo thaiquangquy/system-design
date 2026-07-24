@@ -31,7 +31,7 @@ class ForwardingControllerTest {
     void allowedRequestForwardsToSampleApiAndMergesHeaders() throws Exception {
         HttpHeaders rateLimitHeaders = new HttpHeaders();
         rateLimitHeaders.set("X-RateLimit-Remaining", "2");
-        when(rateLimitClient.check("route:login:ip:127.0.0.1"))
+        when(rateLimitClient.check("route:login", "127.0.0.1"))
                 .thenReturn(new RateLimitCheckResult(true, HttpStatus.OK, rateLimitHeaders));
 
         byte[] downstreamBody = "{\"token\":\"sample-jwt-token\"}".getBytes();
@@ -52,7 +52,7 @@ class ForwardingControllerTest {
     void deniedRequestNeverCallsSampleApi() throws Exception {
         HttpHeaders rateLimitHeaders = new HttpHeaders();
         rateLimitHeaders.set("X-RateLimit-Remaining", "0");
-        when(rateLimitClient.check("route:login:ip:127.0.0.1"))
+        when(rateLimitClient.check("route:login", "127.0.0.1"))
                 .thenReturn(new RateLimitCheckResult(false, HttpStatus.TOO_MANY_REQUESTS, rateLimitHeaders));
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/login");

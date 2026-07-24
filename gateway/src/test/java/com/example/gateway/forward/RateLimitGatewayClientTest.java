@@ -30,7 +30,7 @@ class RateLimitGatewayClientTest {
         when(restTemplate.getForEntity(anyString(), org.mockito.ArgumentMatchers.eq(Void.class)))
                 .thenReturn(new ResponseEntity<>(headers, HttpStatus.OK));
 
-        RateLimitCheckResult result = client.check("route:login:ip:127.0.0.1");
+        RateLimitCheckResult result = client.check("route:login", "127.0.0.1");
 
         assertThat(result.allowed()).isTrue();
         assertThat(result.status()).isEqualTo(HttpStatus.OK);
@@ -47,7 +47,7 @@ class RateLimitGatewayClientTest {
         when(restTemplate.getForEntity(anyString(), org.mockito.ArgumentMatchers.eq(Void.class)))
                 .thenThrow(exception);
 
-        RateLimitCheckResult result = client.check("route:login:ip:127.0.0.1");
+        RateLimitCheckResult result = client.check("route:login", "127.0.0.1");
 
         assertThat(result.allowed()).isFalse();
         assertThat(result.status()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
@@ -59,7 +59,7 @@ class RateLimitGatewayClientTest {
         when(restTemplate.getForEntity(anyString(), org.mockito.ArgumentMatchers.eq(Void.class)))
                 .thenThrow(new ResourceAccessException("connection refused"));
 
-        RateLimitCheckResult result = client.check("route:login:ip:127.0.0.1");
+        RateLimitCheckResult result = client.check("route:login", "127.0.0.1");
 
         assertThat(result.allowed()).isFalse();
         assertThat(result.status()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
