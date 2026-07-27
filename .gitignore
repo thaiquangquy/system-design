@@ -1,2 +1,3 @@
 /.idea/
 **/target/
+rate-limiter/api-gateway-ratelimiter/.idea
