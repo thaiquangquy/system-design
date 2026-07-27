@@ -141,10 +141,5 @@ Client → Spring Cloud Gateway → Custom Filter → RateLimiterService (TokenB
 
 MIT (Free for personal or commercial use)
 
----
-
-## Author
-
-Dinesh Arney  
-[LinkedIn](https://linkedin.com/in/dinesharney)  
-Passionate about scalable systems, cloud-native design, and developer growth.
+## Reference
+https://medium.com/@dinesharney/pluggable-rate-limiter-microservice-with-spring-cloud-gateway-3ab8c4423950
