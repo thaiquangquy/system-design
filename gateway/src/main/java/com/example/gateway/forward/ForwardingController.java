@@ -32,7 +32,7 @@ public class ForwardingController {
         String path = request.getRequestURI();
         String key = keyBuilder.build(path);
 
-        RateLimitCheckResult checkResult = rateLimitClient.check(key, request.getRemoteAddr());
+        RateLimitCheckResult checkResult = rateLimitClient.check(key, clientIp(request));
         if (!checkResult.allowed()) {
             return ResponseEntity.status(checkResult.status())
                     .headers(checkResult.rateLimitHeaders())
@@ -56,6 +56,15 @@ public class ForwardingController {
         return ResponseEntity.status(downstream.getStatusCode())
                 .headers(headers)
                 .body(downstream.getBody());
+    }
+
+    private String clientIp(HttpServletRequest request) {
+        // TODO: on production need to use request.getRemoteAddr() instead of trusting the header
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     private ResponseEntity<byte[]> forwardToSampleApi(HttpServletRequest request, String path) throws IOException {

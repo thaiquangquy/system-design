@@ -1,6 +1,5 @@
-### === End-to-end gateway demo: per-IP rate limiting, tested from 2 separate machines ===
+### === End-to-end gateway demo: per-IP rate limiting, simulated call from 2 separate machines using X-Forwarded-For header ===
 ### Run `docker compose up --build` on the host machine, then set @host to its LAN/reachable IP (not "localhost", unless testing from the host itself).
-### Both test machines must hit the gateway directly (no shared NAT/VPN, no X-Forwarded-For support) or they'll look like one IP and share a quota.
 @host = 192.168.70.162
 
 ### Gateway builds keys as route:<path> (e.g. /login -> route:login) and sends key+caller IP separately to /check; rules are per-route only, no IP in keyPrefix.
@@ -14,9 +13,11 @@ Content-Type: application/json
 
 ### Step 2 (Machine A): run 3x for 200s counting down Remaining 2,1,0, then a 4th returns 429.
 GET http://{{host}}:8082/login
+X-Forwarded-For: 1.1.1.1
 
 ### Step 3 (Machine B): run the same request — it gets its own fresh quota (200, Remaining: 2), proving the two IPs track independently under one shared rule.
 GET http://{{host}}:8082/login
+X-Forwarded-For: 2.2.2.2
 
 ### Step 4 (optional): a route with no seeded rule is always denied (fail-closed), regardless of caller IP.
 GET http://{{host}}:8082/does-not-exist
