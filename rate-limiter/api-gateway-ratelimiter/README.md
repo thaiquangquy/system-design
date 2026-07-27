@@ -22,7 +22,7 @@ It demonstrates a **pluggable rate limiter architecture** with support for multi
 
 - Spring Boot 3.x
 - Spring Cloud Gateway
-- Java 17
+- Java 21
 - Spring WebFlux
 - Springdoc OpenAPI (Swagger)
 - Postman (for API testing)

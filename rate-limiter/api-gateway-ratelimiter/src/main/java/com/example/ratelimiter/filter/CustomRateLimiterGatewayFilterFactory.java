@@ -3,6 +3,8 @@ package com.example.ratelimiter.filter;
 import com.example.ratelimiter.service.LeakyBucketRateLimiter;
 import com.example.ratelimiter.service.RateLimiterService;
 import com.example.ratelimiter.service.TokenBucketRateLimiter;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpStatus;
@@ -33,6 +35,7 @@ public class CustomRateLimiterGatewayFilterFactory extends AbstractGatewayFilter
         return (exchange, chain) -> {
             String routeId = config.getRouteId();
             RateLimiterService rateLimiter = rateLimiters.get(routeId);
+            // fail open by default
             if (rateLimiter == null || rateLimiter.isAllowed(getClientKey(exchange))) {
                 return chain.filter(exchange);
             } else {
@@ -46,9 +49,9 @@ public class CustomRateLimiterGatewayFilterFactory extends AbstractGatewayFilter
         return exchange.getRequest().getRemoteAddress().getAddress().getHostAddress();
     }
 
+    @Getter
+    @Setter
     public static class Config {
         private String routeId;
-        public String getRouteId() { return routeId; }
-        public void setRouteId(String routeId) { this.routeId = routeId; }
     }
 }
