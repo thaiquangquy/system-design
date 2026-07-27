@@ -1,0 +1,5 @@
+### Sample API directly (bypasses the gateway / rate limiter) — /user
+GET http://localhost:8081/user
+
+### Sample API directly — /login
+GET http://localhost:8081/login

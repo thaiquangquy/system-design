@@ -1,0 +1,8 @@
+server:
+  port: ${GATEWAY_PORT:8082}
+
+gateway:
+  rate-limiter:
+    base-url: ${RATE_LIMITER_BASE_URL:http://localhost:8080}
+  sample-api:
+    base-url: ${SAMPLE_API_BASE_URL:http://localhost:8081}

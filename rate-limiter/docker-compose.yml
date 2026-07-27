@@ -1,0 +1,66 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      # Host port 16379 (not the default 6379) to avoid clashing with other
+      # local Redis containers; the app-to-app connection inside compose
+      # always uses the service name "redis" on its default port 6379.
+      - "16379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  rate-limiter:
+    build: ./my-rate-limiter
+    ports:
+      - "8080:8080"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Local e2e/demo token only — matches the value already used in demo.http.
+      ADMIN_TOKEN: changeme
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  sample-api:
+    build: ../common/sample-api
+    ports:
+      - "8081:8081"
+    environment:
+      SAMPLE_API_PORT: 8081
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "8082:8082"
+    environment:
+      GATEWAY_PORT: 8082
+      RATE_LIMITER_BASE_URL: http://rate-limiter:8080
+      SAMPLE_API_BASE_URL: http://sample-api:8081
+    depends_on:
+      rate-limiter:
+        condition: service_healthy
+      sample-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

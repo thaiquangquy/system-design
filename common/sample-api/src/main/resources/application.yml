@@ -1,0 +1,2 @@
+server:
+  port: ${SAMPLE_API_PORT:8081}

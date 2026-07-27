@@ -1,0 +1,7 @@
+target/
+.idea/
+*.md
+*.http
+http-client.env.json
+Dockerfile
+.dockerignore
