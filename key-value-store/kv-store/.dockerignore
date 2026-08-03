@@ -1,0 +1,7 @@
+target/
+.idea/
+*.md
+*.http
+Dockerfile
+.dockerignore
+data/

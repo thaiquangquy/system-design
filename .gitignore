@@ -1,3 +1,4 @@
 /.idea/
 **/target/
 rate-limiter/api-gateway-ratelimiter/.idea
+key-value-store/kv-store/data/
