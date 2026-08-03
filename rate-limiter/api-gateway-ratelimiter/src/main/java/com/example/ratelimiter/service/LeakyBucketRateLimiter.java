@@ -21,7 +21,7 @@ public class LeakyBucketRateLimiter implements RateLimiterService {
 
     @Override
     public boolean isAllowed(String key) {
-        Bucket bucket = buckets.computeIfAbsent(key, k -> new Bucket(capacity, Instant.now().getEpochSecond()));
+        Bucket bucket = buckets.computeIfAbsent(key, k -> new Bucket(0, Instant.now().getEpochSecond()));
         synchronized (bucket) {
             long now = Instant.now().getEpochSecond();
             long elapsed = now - bucket.lastLeakTime;
