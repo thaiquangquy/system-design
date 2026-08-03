@@ -1,0 +1,9 @@
+server:
+  port: 8080
+
+kvstore:
+  data-dir: ${KVSTORE_DATA_DIR:./data}
+  flush-threshold-bytes: ${KVSTORE_FLUSH_THRESHOLD_BYTES:4194304}
+  bloom-expected-insertions: ${KVSTORE_BLOOM_EXPECTED_INSERTIONS:10000}
+  bloom-false-positive-rate: ${KVSTORE_BLOOM_FALSE_POSITIVE_RATE:0.01}
+  max-value-bytes: ${KVSTORE_MAX_VALUE_BYTES:1048576}
