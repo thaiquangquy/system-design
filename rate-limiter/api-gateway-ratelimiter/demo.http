@@ -1,0 +1,61 @@
+### GET request to token bucket test endpoint without rate limiter (bypasses the gateway route entirely)
+GET http://localhost:8083/test/tokenbucket
+
+### GET request to leaky bucket test endpoint without rate limiter (bypasses the gateway route entirely)
+GET http://localhost:8083/test/leakybucket
+
+### GET health check
+GET http://localhost:8083/actuator/health
+
+### GET registered routes from the gateway
+GET http://localhost:8083/actuator/gateway/routes
+
+
+### =========================================================
+### Token Bucket (route1): /tokenbucket/** -> StripPrefix -> sample-api /user
+### capacity=5, refill 5 tokens / 60s -> 6th call within the window should 429
+### =========================================================
+GET http://localhost:8083/tokenbucket/user
+
+
+### =========================================================
+### Leaky Bucket (route2): /leakybucket/** -> StripPrefix -> sample-api /login
+### capacity=10, leak 1/sec -> 11th call in quick succession should 429
+### =========================================================
+GET http://localhost:8083/leakybucket/login
+
+
+### =========================================================
+### Sliding Window Counter, in-memory (slidingwindow): /slidingwindow/** -> StripPrefix -> sample-api /user
+### limit=3 requests / 30s window, scoped per client IP for the whole route (same as route1/route2)
+### =========================================================
+GET http://localhost:8083/slidingwindow/user
+
+
+### =========================================================
+### Sliding Window Counter, Redis-backed (slidingwindow-redis): /slidingwindow-redis/** -> StripPrefix -> sample-api /user
+### limit=3 requests / 30s window, scoped per client IP for the whole route, state lives in Redis (survives app restarts)
+### =========================================================
+GET http://localhost:8083/slidingwindow-redis/user
+
+
+### =========================================================
+### Path + User-ID keyed (userpath-demo): /userpath-demo/** -> StripPrefix -> sample-api /user or /login
+### keyBy: PATH,USER_ID -> quota is independent per (downstream path, X-User-Id) pair
+### capacity=3, refill 3 tokens / 60s -> 4th call for the same path+user should 429
+### =========================================================
+
+### alice on /userpath-demo/user (allowed, 1 of 3)
+GET http://localhost:8083/userpath-demo/user
+X-User-Id: alice
+
+### bob on the SAME path /userpath-demo/user (allowed - independent quota per user)
+GET http://localhost:8083/userpath-demo/user
+X-User-Id: bob
+
+### alice on a DIFFERENT path /userpath-demo/login (allowed - independent quota per path)
+GET http://localhost:8083/userpath-demo/login
+X-User-Id: alice
+
+### no X-User-Id header (falls back to the shared "anonymous" bucket for this path)
+GET http://localhost:8083/userpath-demo/user

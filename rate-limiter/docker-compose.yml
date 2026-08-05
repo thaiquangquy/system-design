@@ -64,3 +64,26 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+
+  api-gateway-ratelimiter:
+    build: ./api-gateway-ratelimiter
+    ports:
+      - "8083:8083"
+    environment:
+      API_GATEWAY_RATELIMITER_PORT: 8083
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SAMPLE_API_BASE_URL: http://sample-api:8081
+      SLIDING_WINDOW_LIMIT: 3
+      SLIDING_WINDOW_WINDOW_SECONDS: 30
+    depends_on:
+      redis:
+        condition: service_healthy
+      sample-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
