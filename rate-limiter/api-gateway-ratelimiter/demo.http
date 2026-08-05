@@ -75,52 +75,36 @@ GET http://localhost:8083/leakybucket/login
 
 
 ### =========================================================
-### Sliding Window Counter, in-memory (ForwardingController): /slidingwindow/** -> sample-api
-### limit=3 requests / 30s window, scoped per key+IP
+### Sliding Window Counter, in-memory (slidingwindow): /slidingwindow/** -> StripPrefix -> sample-api /user
+### limit=3 requests / 30s window, scoped per client IP for the whole route (same as route1/route2)
 ### =========================================================
 
-### Sliding window (local) call #1 for 1.2.3.4 (allowed)
+### Sliding window (local) call #1 (allowed)
 GET http://localhost:8083/slidingwindow/user
-X-Forwarded-For: 1.2.3.4
 
-### Sliding window (local) call #2 for 1.2.3.4 (allowed)
+### Sliding window (local) call #2 (allowed)
 GET http://localhost:8083/slidingwindow/user
-X-Forwarded-For: 1.2.3.4
 
-### Sliding window (local) call #3 for 1.2.3.4 (allowed, quota now exhausted)
+### Sliding window (local) call #3 (allowed, quota now exhausted)
 GET http://localhost:8083/slidingwindow/user
-X-Forwarded-For: 1.2.3.4
 
-### Sliding window (local) call #4 for 1.2.3.4 (expect 429 Too Many Requests)
+### Sliding window (local) call #4 (expect 429 Too Many Requests)
 GET http://localhost:8083/slidingwindow/user
-X-Forwarded-For: 1.2.3.4
-
-### Sliding window (local) call for a different IP on the same route (allowed - independent quota per IP)
-GET http://localhost:8083/slidingwindow/user
-X-Forwarded-For: 5.6.7.8
-
-### Sliding window (local) against a different path (independent quota per key)
-GET http://localhost:8083/slidingwindow/login
-X-Forwarded-For: 1.2.3.4
 
 
 ### =========================================================
-### Sliding Window Counter, Redis-backed (ForwardingController): /slidingwindow-redis/** -> sample-api
-### limit=3 requests / 30s window, scoped per key+IP, state lives in Redis (survives app restarts)
+### Sliding Window Counter, Redis-backed (slidingwindow-redis): /slidingwindow-redis/** -> StripPrefix -> sample-api /user
+### limit=3 requests / 30s window, scoped per client IP for the whole route, state lives in Redis (survives app restarts)
 ### =========================================================
 
-### Sliding window (redis) call #1 for 9.9.9.9 (allowed)
+### Sliding window (redis) call #1 (allowed)
 GET http://localhost:8083/slidingwindow-redis/user
-X-Forwarded-For: 9.9.9.9
 
-### Sliding window (redis) call #2 for 9.9.9.9 (allowed)
+### Sliding window (redis) call #2 (allowed)
 GET http://localhost:8083/slidingwindow-redis/user
-X-Forwarded-For: 9.9.9.9
 
-### Sliding window (redis) call #3 for 9.9.9.9 (allowed, quota now exhausted)
+### Sliding window (redis) call #3 (allowed, quota now exhausted)
 GET http://localhost:8083/slidingwindow-redis/user
-X-Forwarded-For: 9.9.9.9
 
-### Sliding window (redis) call #4 for 9.9.9.9 (expect 429 Too Many Requests)
+### Sliding window (redis) call #4 (expect 429 Too Many Requests)
 GET http://localhost:8083/slidingwindow-redis/user
-X-Forwarded-For: 9.9.9.9

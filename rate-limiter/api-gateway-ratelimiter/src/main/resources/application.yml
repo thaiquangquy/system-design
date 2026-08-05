@@ -28,6 +28,26 @@ spring:
                 routeId: route2
             - StripPrefix=1
 
+        - id: slidingwindow
+          uri: ${SAMPLE_API_BASE_URL:http://localhost:8081}
+          predicates:
+            - Path=/slidingwindow/**
+          filters:
+            - name: CustomRateLimiter
+              args:
+                routeId: slidingwindow
+            - StripPrefix=1
+
+        - id: slidingwindow-redis
+          uri: ${SAMPLE_API_BASE_URL:http://localhost:8081}
+          predicates:
+            - Path=/slidingwindow-redis/**
+          filters:
+            - name: CustomRateLimiter
+              args:
+                routeId: slidingwindow-redis
+            - StripPrefix=1
+
 server:
   port: ${API_GATEWAY_RATELIMITER_PORT:8083}
 
@@ -42,8 +62,6 @@ logging:
     org.springframework.cloud.gateway: DEBUG
 
 ratelimiter:
-  sample-api:
-    base-url: ${SAMPLE_API_BASE_URL:http://localhost:8081}
   sliding-window:
     limit: ${SLIDING_WINDOW_LIMIT:3}
     window-seconds: ${SLIDING_WINDOW_WINDOW_SECONDS:30}
