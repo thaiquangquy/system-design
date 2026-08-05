@@ -79,7 +79,7 @@ mvn spring-boot:run
 ## How It Works
 
 1. Each request is intercepted by a **custom filter**.
-2. A unique key is generated per client (IP).
+2. A key is generated for the request, per the route's `keyBy` config (default `IP`; also supports `PATH` and `USER_ID`, alone or combined, e.g. `keyBy: PATH,USER_ID`). `USER_ID` reads a configurable header (default `X-User-Id`, unauthenticated — this project has no auth layer) and falls back to a shared `anonymous` bucket when the header is absent.
 3. Filter checks the algorithm (based on route).
 4. If allowed → forwarded to backend (httpbin.org).
 5. If denied → returns HTTP `429 Too Many Requests`.

@@ -48,8 +48,28 @@ spring:
                 routeId: slidingwindow-redis
             - StripPrefix=1
 
+        # Demonstrates keyBy: quota is scoped per (downstream path, X-User-Id) pair
+        # instead of the default IP-only key.
+        - id: userpath-demo
+          uri: ${SAMPLE_API_BASE_URL:http://localhost:8081}
+          predicates:
+            - Path=/userpath-demo/**
+          filters:
+            - name: CustomRateLimiter
+              args:
+                routeId: userpath-demo
+                keyBy: PATH,USER_ID
+                userIdHeader: X-User-Id
+            - StripPrefix=1
+
 server:
   port: ${API_GATEWAY_RATELIMITER_PORT:8083}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,gateway
 
 springdoc:
   swagger-ui:

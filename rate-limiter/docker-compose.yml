@@ -74,6 +74,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SAMPLE_API_BASE_URL: http://sample-api:8081
+      SLIDING_WINDOW_LIMIT: 3
+      SLIDING_WINDOW_WINDOW_SECONDS: 30
     depends_on:
       redis:
         condition: service_healthy
