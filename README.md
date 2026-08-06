@@ -9,6 +9,11 @@
 - Shared under `common/` since it's a stand-in dependency for other system-design projects, not specific to rate-limiter.
 - Built with Java 21 and Spring Boot 3.3.
 
+## [key-value-store](key-value-store/kv-store/README.md)
+- A single-node key-value store: a disk-backed LSM-style storage engine (write-ahead log + memtable + SSTable + bloom filter) behind a `put(key, value)`/`get(key)` REST API. Phase 1 of the design in [key-value-store/key-value-storage.md](key-value-store/key-value-storage.md) -- partitioning, replication, quorum, gossip, and anti-entropy are documented as future phases, not yet built.
+- No external dependencies (no Redis, no DB) -- every test, including a full HTTP round-trip test, is plain JUnit 5, no Docker required.
+- Built with Java 21 and Spring Boot 3.3.
+
 ## [gateway](rate-limiter/gateway)
 - Sits in front of `sample-api`. For every request it calls the rate-limiter's `/api/v1/rate-limit/check` endpoint (key = route, ip = client IP, passed as separate params so each IP gets its own quota under one shared per-route rule), and only forwards the request downstream if allowed; otherwise it returns 429 immediately. Fails closed (503) if the rate limiter is unreachable.
 - See [rate-limiter/gateway/demo.http](rate-limiter/gateway/demo.http) for an end-to-end walkthrough (seed rules, hit endpoints, observe 200→429).

@@ -1,0 +1,38 @@
+### Put a new key
+PUT http://localhost:8080/api/v1/kv/hello
+Content-Type: application/json
+
+{
+  "value": "world"
+}
+
+### Get it back
+GET http://localhost:8080/api/v1/kv/hello
+
+### Get a key that was never put -> 404
+GET http://localhost:8080/api/v1/kv/does-not-exist
+
+### Overwrite an existing key
+PUT http://localhost:8080/api/v1/kv/hello
+Content-Type: application/json
+
+{
+  "value": "world-v2"
+}
+
+### Re-get the overwritten key -> should return "world-v2"
+GET http://localhost:8080/api/v1/kv/hello
+
+### Put a value over the configured max-value-bytes -> 413
+PUT http://localhost:8080/api/v1/kv/too-big
+Content-Type: application/json
+
+{
+  "value": "replace-this-with-a-string-longer-than-KVSTORE_MAX_VALUE_BYTES-to-see-a-413"
+}
+
+### Put with a missing "value" field -> 400
+PUT http://localhost:8080/api/v1/kv/invalid
+Content-Type: application/json
+
+{}
