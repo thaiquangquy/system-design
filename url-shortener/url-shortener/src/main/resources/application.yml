@@ -20,3 +20,6 @@ urlshortener:
   ratelimit:
     limit: ${RATELIMIT_LIMIT:10}
     window-seconds: ${RATELIMIT_WINDOW_SECONDS:60}
+  expiration:
+    # Hourly by default: seconds minutes hours day-of-month month day-of-week
+    purge-cron: ${EXPIRATION_PURGE_CRON:0 0 * * * *}
