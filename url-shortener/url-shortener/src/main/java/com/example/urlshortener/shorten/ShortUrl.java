@@ -28,10 +28,7 @@ public class ShortUrl {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Nullable at the column level: the row is inserted first to obtain the generated id,
-    // then updated with the base62-encoded code (see ShortenService#createShortCode).
-    // Uniqueness is enforced by the idx_short_url_code index above.
-    @Column(name = "short_url", length = 16)
+    @Column(name = "short_url", nullable = false, length = 16)
     private String shortUrl;
 
     @Column(name = "long_url", nullable = false, columnDefinition = "text")
@@ -40,7 +37,8 @@ public class ShortUrl {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    public ShortUrl(String longUrl) {
+    public ShortUrl(String shortUrl, String longUrl) {
+        this.shortUrl = shortUrl;
         this.longUrl = longUrl;
         this.createdAt = Instant.now();
     }

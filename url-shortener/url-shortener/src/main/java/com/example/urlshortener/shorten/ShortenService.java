@@ -1,5 +1,6 @@
 package com.example.urlshortener.shorten;
 
+import com.example.urlshortener.idgen.IdTicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ShortenService {
 
     private final ShortUrlRepository repository;
+    private final IdTicketService idTicketService;
 
     /**
      * Returns the base62 short code for the given long URL, reusing an existing code if this
@@ -23,9 +25,8 @@ public class ShortenService {
     }
 
     private String createShortCode(String longUrl) {
-        ShortUrl entity = repository.save(new ShortUrl(longUrl));
-        entity.setShortUrl(Base62Encoder.encode(entity.getId()));
-        repository.save(entity);
-        return entity.getShortUrl();
+        String code = Base62Encoder.encode(idTicketService.nextId());
+        repository.save(new ShortUrl(code, longUrl));
+        return code;
     }
 }
