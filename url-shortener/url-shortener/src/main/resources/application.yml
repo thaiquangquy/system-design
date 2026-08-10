@@ -17,3 +17,6 @@ spring:
 
 urlshortener:
   base-url: ${BASE_URL:http://localhost:8080}
+  ratelimit:
+    limit: ${RATELIMIT_LIMIT:10}
+    window-seconds: ${RATELIMIT_WINDOW_SECONDS:60}
