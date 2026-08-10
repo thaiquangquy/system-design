@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      # Host port 15432 (not the default 5432) to avoid clashing with other
+      # local Postgres instances; app-to-app connection inside compose
+      # always uses the service name "postgres" on its default port 5432.
+      - "15432:5432"
+    environment:
+      POSTGRES_DB: urlshortener
+      POSTGRES_USER: urlshortener
+      POSTGRES_PASSWORD: urlshortener
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "urlshortener"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  url-shortener:
+    build: ./url-shortener
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_NAME: urlshortener
+      DB_USER: urlshortener
+      DB_PASSWORD: urlshortener
+      BASE_URL: http://localhost:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
