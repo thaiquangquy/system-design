@@ -1,12 +1,11 @@
 package com.example.urlshortener.expiration;
 
-import com.example.urlshortener.shorten.ShortUrlRepository;
+import com.example.urlshortener.sharding.ShardedShortUrlOperations;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 /** Purges short URLs past their expiresAt, per design.md §4/§8. */
 @Slf4j
@@ -14,12 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ExpiredUrlPurgeJob {
 
-    private final ShortUrlRepository repository;
+    private final ShardedShortUrlOperations shortUrlOperations;
 
     @Scheduled(cron = "${urlshortener.expiration.purge-cron}")
-    @Transactional
     public void purgeExpired() {
-        long deleted = repository.deleteByExpiresAtBefore(Instant.now());
+        long deleted = shortUrlOperations.deleteExpired(Instant.now());
         if (deleted > 0) {
             log.info("Purged {} expired short URL(s)", deleted);
         }

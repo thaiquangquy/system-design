@@ -2,7 +2,7 @@ package com.example.urlshortener.redirect;
 
 import com.example.urlshortener.cache.RedirectCacheService;
 import com.example.urlshortener.exception.ShortUrlNotFoundException;
-import com.example.urlshortener.shorten.ShortUrlRepository;
+import com.example.urlshortener.sharding.ShardedShortUrlOperations;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RedirectService {
 
-    private final ShortUrlRepository repository;
+    private final ShardedShortUrlOperations shortUrlOperations;
     private final RedirectCacheService cache;
 
     public String resolve(String shortUrlCode) {
@@ -19,7 +19,7 @@ public class RedirectService {
 
     private String loadAndCache(String shortUrlCode) {
         String longUrl =
-                repository
+                shortUrlOperations
                         .findByShortUrl(shortUrlCode)
                         .orElseThrow(() -> new ShortUrlNotFoundException(shortUrlCode))
                         .getLongUrl();

@@ -9,8 +9,8 @@ import static org.mockito.Mockito.when;
 
 import com.example.urlshortener.cache.RedirectCacheService;
 import com.example.urlshortener.exception.ShortUrlNotFoundException;
+import com.example.urlshortener.sharding.ShardedShortUrlOperations;
 import com.example.urlshortener.shorten.ShortUrl;
-import com.example.urlshortener.shorten.ShortUrlRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
@@ -18,24 +18,25 @@ class RedirectServiceTest {
 
     @Test
     void returnsCachedLongUrlWithoutHittingTheRepository() {
-        ShortUrlRepository repository = mock(ShortUrlRepository.class);
+        ShardedShortUrlOperations shortUrlOperations = mock(ShardedShortUrlOperations.class);
         RedirectCacheService cache = mock(RedirectCacheService.class);
         when(cache.get("abc")).thenReturn(Optional.of("https://example.com/cached"));
-        RedirectService service = new RedirectService(repository, cache);
+        RedirectService service = new RedirectService(shortUrlOperations, cache);
 
         String longUrl = service.resolve("abc");
 
         assertThat(longUrl).isEqualTo("https://example.com/cached");
-        verify(repository, never()).findByShortUrl("abc");
+        verify(shortUrlOperations, never()).findByShortUrl("abc");
     }
 
     @Test
     void loadsFromRepositoryAndPopulatesCacheOnMiss() {
-        ShortUrlRepository repository = mock(ShortUrlRepository.class);
+        ShardedShortUrlOperations shortUrlOperations = mock(ShardedShortUrlOperations.class);
         RedirectCacheService cache = mock(RedirectCacheService.class);
         when(cache.get("abc")).thenReturn(Optional.empty());
-        when(repository.findByShortUrl("abc")).thenReturn(Optional.of(new ShortUrl("abc", "https://example.com/db")));
-        RedirectService service = new RedirectService(repository, cache);
+        when(shortUrlOperations.findByShortUrl("abc"))
+                .thenReturn(Optional.of(new ShortUrl("abc", "https://example.com/db")));
+        RedirectService service = new RedirectService(shortUrlOperations, cache);
 
         String longUrl = service.resolve("abc");
 
@@ -45,11 +46,11 @@ class RedirectServiceTest {
 
     @Test
     void throwsWhenCodeIsUnknownEverywhere() {
-        ShortUrlRepository repository = mock(ShortUrlRepository.class);
+        ShardedShortUrlOperations shortUrlOperations = mock(ShardedShortUrlOperations.class);
         RedirectCacheService cache = mock(RedirectCacheService.class);
         when(cache.get("missing")).thenReturn(Optional.empty());
-        when(repository.findByShortUrl("missing")).thenReturn(Optional.empty());
-        RedirectService service = new RedirectService(repository, cache);
+        when(shortUrlOperations.findByShortUrl("missing")).thenReturn(Optional.empty());
+        RedirectService service = new RedirectService(shortUrlOperations, cache);
 
         assertThatThrownBy(() -> service.resolve("missing")).isInstanceOf(ShortUrlNotFoundException.class);
     }

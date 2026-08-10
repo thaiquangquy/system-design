@@ -1,24 +1,24 @@
 package com.example.urlshortener.shorten;
 
 import com.example.urlshortener.idgen.IdTicketService;
+import com.example.urlshortener.sharding.ShardedShortUrlOperations;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class ShortenService {
 
-    private final ShortUrlRepository repository;
+    private final ShardedShortUrlOperations shortUrlOperations;
     private final IdTicketService idTicketService;
 
     /**
      * Returns the base62 short code for the given long URL, reusing an existing code if this
-     * long URL was already shortened (idempotency per design.md §6.1).
+     * long URL was already shortened (idempotency per design.md §6.1). Not wrapped in one
+     * transaction — see {@link ShardedShortUrlOperations} for why each call is its own.
      */
-    @Transactional
     public String shorten(String longUrl) {
-        return repository
+        return shortUrlOperations
                 .findByLongUrl(longUrl)
                 .map(ShortUrl::getShortUrl)
                 .orElseGet(() -> createShortCode(longUrl));
@@ -26,7 +26,7 @@ public class ShortenService {
 
     private String createShortCode(String longUrl) {
         String code = Base62Encoder.encode(idTicketService.nextId());
-        repository.save(new ShortUrl(code, longUrl));
+        shortUrlOperations.save(new ShortUrl(code, longUrl));
         return code;
     }
 }
