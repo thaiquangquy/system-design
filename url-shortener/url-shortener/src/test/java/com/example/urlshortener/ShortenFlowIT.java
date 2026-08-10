@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.urlshortener.shorten.dto.ShortenRequest;
 import com.example.urlshortener.shorten.dto.ShortenResponse;
-import com.example.urlshortener.support.PostgresTestSupport;
+import com.example.urlshortener.support.IntegrationTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class ShortenFlowIT extends PostgresTestSupport {
+class ShortenFlowIT extends IntegrationTestSupport {
 
     @LocalServerPort
     private int port;
