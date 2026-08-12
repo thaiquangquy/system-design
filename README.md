@@ -19,6 +19,10 @@
 - See [rate-limiter/gateway/demo.http](rate-limiter/gateway/demo.http) for an end-to-end walkthrough (seed rules, hit endpoints, observe 200→429).
 - Built with Java 21 and Spring Boot 3.3, plain Spring MVC + `RestTemplate` (no Spring Cloud Gateway).
 
+## [url-shortener](url-shortener/url-shortener/README.md)
+- Converts long URLs into compact base62-encoded short codes and redirects short codes back to the original URL. Phase 1 MVP: single node, PostgreSQL-backed, no cache/rate-limit/expiration/sharding yet. See [`url-shortener/design.md`](url-shortener/design.md) for the full system design and phase 2 roadmap.
+- Built with Java 21 and Spring Boot 3.3.
+
 ## Running everything together
 
 ```bash
@@ -27,3 +31,10 @@ docker compose up --build
 ```
 
 Brings up Redis, rate-limiter (`:8080`), sample-api (`:8081`), and gateway (`:8082`), wired together and gated on `/actuator/health` so each service only starts once its dependencies are actually ready. Once all four containers report healthy (`docker compose ps`), run through [rate-limiter/gateway/demo.http](rate-limiter/gateway/demo.http) against `localhost` to exercise the full e2e flow.
+
+```bash
+cd url-shortener
+docker compose up --build
+```
+
+Brings up Postgres and url-shortener (`:8080`), gated on `/actuator/health`. Once healthy, run through [url-shortener/url-shortener/demo.http](url-shortener/url-shortener/demo.http) against `localhost`.
