@@ -32,7 +32,7 @@ class RedirectCacheIT extends IntegrationTestSupport {
         repository.save(new ShortUrl("cachetest", "https://example.com/cache-test"));
         assertThat(cache.get("cachetest")).isEmpty();
 
-        ResponseEntity<Void> first =
+        var first =
                 restTemplate.getForEntity("http://localhost:" + port + "/cachetest", Void.class);
         assertThat(first.getHeaders().getLocation()).hasToString("https://example.com/cache-test");
         assertThat(cache.get("cachetest")).contains("https://example.com/cache-test");
@@ -43,7 +43,7 @@ class RedirectCacheIT extends IntegrationTestSupport {
         row.setLongUrl("https://example.com/should-not-be-seen");
         repository.save(row);
 
-        ResponseEntity<Void> second =
+        var second =
                 restTemplate.getForEntity("http://localhost:" + port + "/cachetest", Void.class);
         assertThat(second.getHeaders().getLocation()).hasToString("https://example.com/cache-test");
     }

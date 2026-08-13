@@ -33,11 +33,11 @@ class RateLimitIT extends IntegrationTestSupport {
     void rejectsRequestsOnceThePerIpLimitIsExceeded() {
         String url = "http://localhost:" + port + "/api/v1/shorten";
 
-        ResponseEntity<Void> first =
+        var first =
                 restTemplate.postForEntity(url, new ShortenRequest("https://example.com/rl-1"), Void.class);
-        ResponseEntity<Void> second =
+        var second =
                 restTemplate.postForEntity(url, new ShortenRequest("https://example.com/rl-2"), Void.class);
-        ResponseEntity<Void> third =
+        var third =
                 restTemplate.postForEntity(url, new ShortenRequest("https://example.com/rl-3"), Void.class);
 
         assertThat(first.getStatusCode()).isEqualTo(HttpStatus.OK);

@@ -12,85 +12,88 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
 import java.time.Duration;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.redis.core.ValueOperations;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.test.util.ReflectionTestUtils;
 
+@ExtendWith(MockitoExtension.class)
 class RateLimitFilterTest {
 
-    @Test
-    void skipsNonShortenPaths() throws Exception {
-        StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
-        RateLimitFilter filter = new RateLimitFilter(redisTemplate, 1, 60);
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        FilterChain chain = mock(FilterChain.class);
-        when(request.getMethod()).thenReturn("GET");
-        when(request.getRequestURI()).thenReturn("/abc123");
+  private static final int LIMIT = 5;
+  private static final long WINDOW_SECONDS = 60;
 
-        filter.doFilter(request, response, chain);
+  @Mock private StringRedisTemplate redisTemplate;
+  @Mock private ValueOperations<String, String> valueOps;
+  @Mock private HttpServletRequest request;
+  @Mock private HttpServletResponse response;
+  @Mock private FilterChain chain;
 
-        verify(chain).doFilter(request, response);
-        verify(redisTemplate, never()).opsForValue();
-    }
+  @InjectMocks private RateLimitFilter filter;
 
-    @Test
-    void allowsRequestsUnderTheLimit() throws Exception {
-        StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
-        ValueOperations<String, String> valueOps = mock(ValueOperations.class);
-        when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.increment(anyString())).thenReturn(1L);
-        RateLimitFilter filter = new RateLimitFilter(redisTemplate, 5, 60);
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        FilterChain chain = mock(FilterChain.class);
-        when(request.getMethod()).thenReturn("POST");
-        when(request.getRequestURI()).thenReturn("/api/v1/shorten");
-        when(request.getRemoteAddr()).thenReturn("1.2.3.4");
+  @BeforeEach
+  void setUp() {
+    ReflectionTestUtils.setField(filter, "limit", LIMIT);
+    ReflectionTestUtils.setField(filter, "windowSeconds", WINDOW_SECONDS);
+  }
 
-        filter.doFilter(request, response, chain);
+  @Test
+  void skipsNonShortenPaths() throws Exception {
+    when(request.getMethod()).thenReturn("GET");
 
-        verify(chain).doFilter(request, response);
-        verify(redisTemplate).expire(anyString(), any(Duration.class));
-    }
+    filter.doFilter(request, response, chain);
 
-    @Test
-    void rejectsRequestsOverTheLimit() throws Exception {
-        StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
-        ValueOperations<String, String> valueOps = mock(ValueOperations.class);
-        when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.increment(anyString())).thenReturn(6L);
-        RateLimitFilter filter = new RateLimitFilter(redisTemplate, 5, 60);
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        FilterChain chain = mock(FilterChain.class);
-        when(request.getMethod()).thenReturn("POST");
-        when(request.getRequestURI()).thenReturn("/api/v1/shorten");
-        when(request.getRemoteAddr()).thenReturn("1.2.3.4");
-        when(response.getWriter()).thenReturn(mock(PrintWriter.class));
+    verify(chain).doFilter(request, response);
+    verify(redisTemplate, never()).opsForValue();
+  }
 
-        filter.doFilter(request, response, chain);
+  @Test
+  void allowsRequestsUnderTheLimit() throws Exception {
+    when(redisTemplate.opsForValue()).thenReturn(valueOps);
+    when(valueOps.increment(anyString())).thenReturn(1L);
+    when(request.getMethod()).thenReturn("POST");
+    when(request.getRequestURI()).thenReturn("/api/v1/shorten");
+    when(request.getRemoteAddr()).thenReturn("1.2.3.4");
 
-        verify(response).setStatus(429);
-        verify(chain, never()).doFilter(request, response);
-    }
+    filter.doFilter(request, response, chain);
 
-    @Test
-    void usesFirstXForwardedForAddressWhenPresent() throws Exception {
-        StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
-        ValueOperations<String, String> valueOps = mock(ValueOperations.class);
-        when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.increment(anyString())).thenReturn(1L);
-        RateLimitFilter filter = new RateLimitFilter(redisTemplate, 5, 60);
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        FilterChain chain = mock(FilterChain.class);
-        when(request.getMethod()).thenReturn("POST");
-        when(request.getRequestURI()).thenReturn("/api/v1/shorten");
-        when(request.getHeader("X-Forwarded-For")).thenReturn("9.9.9.9, 10.0.0.1");
+    verify(chain).doFilter(request, response);
+    verify(redisTemplate).expire(anyString(), any(Duration.class));
+  }
 
-        filter.doFilter(request, response, chain);
+  @Test
+  void rejectsRequestsOverTheLimit() throws Exception {
+    when(redisTemplate.opsForValue()).thenReturn(valueOps);
+    when(valueOps.increment(anyString())).thenReturn(LIMIT + 1L);
+    when(request.getMethod()).thenReturn("POST");
+    when(request.getRequestURI()).thenReturn("/api/v1/shorten");
+    when(request.getRemoteAddr()).thenReturn("1.2.3.4");
+    when(response.getWriter()).thenReturn(mock(PrintWriter.class));
 
-        verify(valueOps).increment("url-shortener:ratelimit:shorten:9.9.9.9:" + (System.currentTimeMillis() / 1000 / 60));
-    }
+    filter.doFilter(request, response, chain);
+
+    verify(response).setStatus(429);
+    verify(chain, never()).doFilter(request, response);
+  }
+
+  @Test
+  void usesFirstXForwardedForAddressWhenPresent() throws Exception {
+    when(redisTemplate.opsForValue()).thenReturn(valueOps);
+    when(valueOps.increment(anyString())).thenReturn(1L);
+    when(request.getMethod()).thenReturn("POST");
+    when(request.getRequestURI()).thenReturn("/api/v1/shorten");
+    when(request.getHeader("X-Forwarded-For")).thenReturn("9.9.9.9, 10.0.0.1");
+
+    filter.doFilter(request, response, chain);
+
+    verify(valueOps)
+        .increment(
+            "url-shortener:ratelimit:shorten:9.9.9.9:"
+                + (System.currentTimeMillis() / 1000 / WINDOW_SECONDS));
+  }
 }
