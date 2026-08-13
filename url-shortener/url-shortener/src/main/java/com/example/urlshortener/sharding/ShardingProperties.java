@@ -11,16 +11,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "urlshortener.sharding")
 public record ShardingProperties(boolean enabled, List<Shard> shards) {
 
-    public ShardingProperties {
-        shards = shards == null ? List.of() : List.copyOf(shards);
-    }
+  public ShardingProperties {
+    shards = shards == null ? List.of() : List.copyOf(shards);
+  }
 
-    public record Shard(
-            String id,
-            String primaryUrl,
-            String primaryUsername,
-            String primaryPassword,
-            String replicaUrl,
-            String replicaUsername,
-            String replicaPassword) {}
+  public record Shard(
+      String id,
+      String primaryUrl,
+      String primaryUsername,
+      String primaryPassword,
+      String replicaUrl,
+      String replicaUsername,
+      String replicaPassword) {}
 }

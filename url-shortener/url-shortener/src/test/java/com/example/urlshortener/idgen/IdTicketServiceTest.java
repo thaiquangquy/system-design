@@ -9,14 +9,14 @@ import org.junit.jupiter.api.Test;
 
 class IdTicketServiceTest {
 
-    @Test
-    void nextIdReturnsTheGeneratedIdOfTheSavedTicket() {
-        IdTicketRepository repository = mock(IdTicketRepository.class);
-        IdTicket saved = mock(IdTicket.class);
-        when(saved.getId()).thenReturn(42L);
-        when(repository.save(any(IdTicket.class))).thenReturn(saved);
-        IdTicketService service = new IdTicketService(repository);
+  @Test
+  void nextIdReturnsTheGeneratedIdOfTheSavedTicket() {
+    IdTicketRepository repository = mock(IdTicketRepository.class);
+    IdTicket saved = mock(IdTicket.class);
+    when(saved.getId()).thenReturn(42L);
+    when(repository.save(any(IdTicket.class))).thenReturn(saved);
+    IdTicketService service = new IdTicketService(repository);
 
-        assertThat(service.nextId()).isEqualTo(42L);
-    }
+    assertThat(service.nextId()).isEqualTo(42L);
+  }
 }

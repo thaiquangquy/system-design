@@ -14,24 +14,22 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class ExpiredUrlPurgeJobIT extends IntegrationTestSupport {
 
-    @Autowired
-    private ShortUrlRepository repository;
+  @Autowired private ShortUrlRepository repository;
 
-    @Autowired
-    private ExpiredUrlPurgeJob purgeJob;
+  @Autowired private ExpiredUrlPurgeJob purgeJob;
 
-    @Test
-    void purgesOnlyExpiredRows() {
-        ShortUrl expired = new ShortUrl("expired1", "https://example.com/expired");
-        expired.setExpiresAt(Instant.now().minus(1, ChronoUnit.DAYS));
-        repository.save(expired);
+  @Test
+  void purgesOnlyExpiredRows() {
+    ShortUrl expired = new ShortUrl("expired1", "https://example.com/expired");
+    expired.setExpiresAt(Instant.now().minus(1, ChronoUnit.DAYS));
+    repository.save(expired);
 
-        ShortUrl live = new ShortUrl("live1", "https://example.com/live");
-        repository.save(live);
+    ShortUrl live = new ShortUrl("live1", "https://example.com/live");
+    repository.save(live);
 
-        purgeJob.purgeExpired();
+    purgeJob.purgeExpired();
 
-        assertThat(repository.findByShortUrl("expired1")).isEmpty();
-        assertThat(repository.findByShortUrl("live1")).isPresent();
-    }
+    assertThat(repository.findByShortUrl("expired1")).isEmpty();
+    assertThat(repository.findByShortUrl("live1")).isPresent();
+  }
 }

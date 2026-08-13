@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.example.urlshortener.cache.RedirectCacheService;
 import com.example.urlshortener.exception.ShortUrlNotFoundException;
-import com.example.urlshortener.sharding.ShardedShortUrlOperations;
+import com.example.urlshortener.sharding.ShortUrlOperations;
 import com.example.urlshortener.shorten.ShortUrl;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class RedirectServiceTest {
 
-  @Mock private ShardedShortUrlOperations shortUrlOperations;
+  @Mock private ShortUrlOperations shortUrlOperations;
   @Mock private RedirectCacheService cache;
   @InjectMocks private RedirectService service;
 

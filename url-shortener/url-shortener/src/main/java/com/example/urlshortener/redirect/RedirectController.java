@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class RedirectController {
 
-    private final RedirectService redirectService;
+  private final RedirectService redirectService;
 
-    @GetMapping("/{shortUrlCode}")
-    public ResponseEntity<Void> redirect(@PathVariable String shortUrlCode) {
-        String longUrl = redirectService.resolve(shortUrlCode);
-        return ResponseEntity.status(HttpStatus.FOUND).header(HttpHeaders.LOCATION, longUrl).build();
-    }
+  @GetMapping("/{shortUrlCode}")
+  public ResponseEntity<Void> redirect(@PathVariable String shortUrlCode) {
+    String longUrl = redirectService.resolve(shortUrlCode);
+    return ResponseEntity.status(HttpStatus.FOUND).header(HttpHeaders.LOCATION, longUrl).build();
+  }
 }

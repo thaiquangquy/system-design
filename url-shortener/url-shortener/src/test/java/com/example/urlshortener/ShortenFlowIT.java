@@ -16,52 +16,55 @@ import org.springframework.http.ResponseEntity;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ShortenFlowIT extends IntegrationTestSupport {
 
-    @LocalServerPort
-    private int port;
+  @LocalServerPort private int port;
 
-    @Autowired
-    private TestRestTemplate restTemplate;
+  @Autowired private TestRestTemplate restTemplate;
 
-    private String url(String path) {
-        return "http://localhost:" + port + path;
-    }
+  private String url(String path) {
+    return "http://localhost:" + port + path;
+  }
 
-    @Test
-    void shortenThenRedirectReturnsOriginalLongUrl() {
-        ShortenResponse shortened =
-                restTemplate
-                        .postForEntity(
-                                url("/api/v1/shorten"),
-                                new ShortenRequest("https://example.com/some/long/path"),
-                                ShortenResponse.class)
-                        .getBody();
+  @Test
+  void shortenThenRedirectReturnsOriginalLongUrl() {
+    ShortenResponse shortened =
+        restTemplate
+            .postForEntity(
+                url("/api/v1/shorten"),
+                new ShortenRequest("https://example.com/some/long/path"),
+                ShortenResponse.class)
+            .getBody();
 
-        assertThat(shortened).isNotNull();
-        String code = shortened.shortUrl().substring(shortened.shortUrl().lastIndexOf('/') + 1);
+    assertThat(shortened).isNotNull();
+    String code = shortened.shortUrl().substring(shortened.shortUrl().lastIndexOf('/') + 1);
 
-        ResponseEntity<Void> redirect = restTemplate.getForEntity(url("/" + code), Void.class);
+    ResponseEntity<Void> redirect = restTemplate.getForEntity(url("/" + code), Void.class);
 
-        assertThat(redirect.getStatusCode()).isEqualTo(HttpStatus.FOUND);
-        assertThat(redirect.getHeaders().getLocation()).hasToString("https://example.com/some/long/path");
-    }
+    assertThat(redirect.getStatusCode()).isEqualTo(HttpStatus.FOUND);
+    assertThat(redirect.getHeaders().getLocation())
+        .hasToString("https://example.com/some/long/path");
+  }
 
-    @Test
-    void shorteningTheSameLongUrlTwiceReturnsTheSameShortUrl() {
-        ShortenRequest request = new ShortenRequest("https://example.com/idempotent");
+  @Test
+  void shorteningTheSameLongUrlTwiceReturnsTheSameShortUrl() {
+    ShortenRequest request = new ShortenRequest("https://example.com/idempotent");
 
-        ShortenResponse first =
-                restTemplate.postForEntity(url("/api/v1/shorten"), request, ShortenResponse.class).getBody();
-        ShortenResponse second =
-                restTemplate.postForEntity(url("/api/v1/shorten"), request, ShortenResponse.class).getBody();
+    ShortenResponse first =
+        restTemplate
+            .postForEntity(url("/api/v1/shorten"), request, ShortenResponse.class)
+            .getBody();
+    ShortenResponse second =
+        restTemplate
+            .postForEntity(url("/api/v1/shorten"), request, ShortenResponse.class)
+            .getBody();
 
-        assertThat(first).isNotNull();
-        assertThat(second).isEqualTo(first);
-    }
+    assertThat(first).isNotNull();
+    assertThat(second).isEqualTo(first);
+  }
 
-    @Test
-    void redirectingAnUnknownCodeReturns404() {
-        ResponseEntity<Void> response = restTemplate.getForEntity(url("/doesnotexist"), Void.class);
+  @Test
+  void redirectingAnUnknownCodeReturns404() {
+    ResponseEntity<Void> response = restTemplate.getForEntity(url("/doesnotexist"), Void.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    }
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+  }
 }

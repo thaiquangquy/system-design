@@ -10,19 +10,19 @@ package com.example.urlshortener.sharding;
  */
 final class ShardRoutingContext {
 
-    private static final ThreadLocal<String> CURRENT_ROUTE = new ThreadLocal<>();
+  private static final ThreadLocal<String> CURRENT_ROUTE = new ThreadLocal<>();
 
-    private ShardRoutingContext() {}
+  private ShardRoutingContext() {}
 
-    static void set(String route) {
-        CURRENT_ROUTE.set(route);
-    }
+  static void set(String route) {
+    CURRENT_ROUTE.set(route);
+  }
 
-    static String get() {
-        return CURRENT_ROUTE.get();
-    }
+  static String get() {
+    return CURRENT_ROUTE.get();
+  }
 
-    static void clear() {
-        CURRENT_ROUTE.remove();
-    }
+  static void clear() {
+    CURRENT_ROUTE.remove();
+  }
 }

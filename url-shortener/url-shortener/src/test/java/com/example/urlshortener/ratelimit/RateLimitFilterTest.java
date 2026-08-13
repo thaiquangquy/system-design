@@ -15,12 +15,10 @@ import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class RateLimitFilterTest {
@@ -34,12 +32,11 @@ class RateLimitFilterTest {
   @Mock private HttpServletResponse response;
   @Mock private FilterChain chain;
 
-  @InjectMocks private RateLimitFilter filter;
+  private RateLimitFilter filter;
 
   @BeforeEach
   void setUp() {
-    ReflectionTestUtils.setField(filter, "limit", LIMIT);
-    ReflectionTestUtils.setField(filter, "windowSeconds", WINDOW_SECONDS);
+    filter = new RateLimitFilter(redisTemplate, new RateLimitProperties(LIMIT, WINDOW_SECONDS));
   }
 
   @Test

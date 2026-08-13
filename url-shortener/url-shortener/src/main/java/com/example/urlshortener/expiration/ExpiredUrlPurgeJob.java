@@ -1,6 +1,6 @@
 package com.example.urlshortener.expiration;
 
-import com.example.urlshortener.sharding.ShardedShortUrlOperations;
+import com.example.urlshortener.sharding.ShortUrlOperations;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,13 +13,13 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ExpiredUrlPurgeJob {
 
-    private final ShardedShortUrlOperations shortUrlOperations;
+  private final ShortUrlOperations shortUrlOperations;
 
-    @Scheduled(cron = "${urlshortener.expiration.purge-cron}")
-    public void purgeExpired() {
-        long deleted = shortUrlOperations.deleteExpired(Instant.now());
-        if (deleted > 0) {
-            log.info("Purged {} expired short URL(s)", deleted);
-        }
+  @Scheduled(cron = "${urlshortener.expiration.purge-cron}")
+  public void purgeExpired() {
+    long deleted = shortUrlOperations.deleteExpired(Instant.now());
+    if (deleted > 0) {
+      log.info("Purged {} expired short URL(s)", deleted);
     }
+  }
 }

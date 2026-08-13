@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -26,12 +25,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
   private static final String KEY_PREFIX = "url-shortener:ratelimit:shorten:";
 
   private final StringRedisTemplate redisTemplate;
-
-  @Value("${urlshortener.ratelimit.limit}")
-  private int limit;
-
-  @Value("${urlshortener.ratelimit.window-seconds}")
-  private long windowSeconds;
+  private final RateLimitProperties properties;
 
   @Override
   protected void doFilterInternal(
@@ -50,13 +44,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
   }
 
   private boolean allow(String ip) {
+    long windowSeconds = properties.windowSeconds();
     long windowId = System.currentTimeMillis() / 1000 / windowSeconds;
     String key = KEY_PREFIX + ip + ":" + windowId;
     Long count = redisTemplate.opsForValue().increment(key);
     if (count != null && count == 1L) {
       redisTemplate.expire(key, Duration.ofSeconds(windowSeconds));
     }
-    return count != null && count <= limit;
+    return count != null && count <= properties.limit();
   }
 
   private String clientIp(HttpServletRequest request) {
