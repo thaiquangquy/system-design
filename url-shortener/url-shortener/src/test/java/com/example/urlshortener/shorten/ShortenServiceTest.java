@@ -2,7 +2,6 @@ package com.example.urlshortener.shorten;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -12,17 +11,23 @@ import com.example.urlshortener.idgen.IdTicketService;
 import com.example.urlshortener.sharding.ShortUrlOperations;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class ShortenServiceTest {
+
+  @Mock private ShortUrlOperations shortUrlOperations;
+  @Mock private IdTicketService idTicketService;
+  @InjectMocks private ShortenService service;
 
   @Test
   void returnsExistingShortCodeWhenLongUrlAlreadyKnown() {
-    ShortUrlOperations shortUrlOperations = mock(ShortUrlOperations.class);
-    IdTicketService idTicketService = mock(IdTicketService.class);
     ShortUrl existing = new ShortUrl("1", "https://example.com/already-shortened");
     when(shortUrlOperations.findByLongUrl("https://example.com/already-shortened"))
         .thenReturn(Optional.of(existing));
-    ShortenService service = new ShortenService(shortUrlOperations, idTicketService);
 
     String code = service.shorten("https://example.com/already-shortened");
 
@@ -33,13 +38,10 @@ class ShortenServiceTest {
 
   @Test
   void createsAndEncodesShortCodeForNewLongUrl() {
-    ShortUrlOperations shortUrlOperations = mock(ShortUrlOperations.class);
-    IdTicketService idTicketService = mock(IdTicketService.class);
     when(shortUrlOperations.findByLongUrl("https://example.com/new")).thenReturn(Optional.empty());
     when(idTicketService.nextId()).thenReturn(62L);
     when(shortUrlOperations.save(any(ShortUrl.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
-    ShortenService service = new ShortenService(shortUrlOperations, idTicketService);
 
     String code = service.shorten("https://example.com/new");
 

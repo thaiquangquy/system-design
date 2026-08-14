@@ -51,10 +51,7 @@ class RateLimitFilterTest {
 
   @Test
   void allowsRequestsUnderTheLimit() throws Exception {
-    when(redisTemplate.opsForValue()).thenReturn(valueOps);
-    when(valueOps.increment(anyString())).thenReturn(1L);
-    when(request.getMethod()).thenReturn("POST");
-    when(request.getRequestURI()).thenReturn("/api/v1/shorten");
+    stubShortenPost(1L);
     when(request.getRemoteAddr()).thenReturn("1.2.3.4");
 
     filter.doFilter(request, response, chain);
@@ -65,10 +62,7 @@ class RateLimitFilterTest {
 
   @Test
   void rejectsRequestsOverTheLimit() throws Exception {
-    when(redisTemplate.opsForValue()).thenReturn(valueOps);
-    when(valueOps.increment(anyString())).thenReturn(LIMIT + 1L);
-    when(request.getMethod()).thenReturn("POST");
-    when(request.getRequestURI()).thenReturn("/api/v1/shorten");
+    stubShortenPost(LIMIT + 1L);
     when(request.getRemoteAddr()).thenReturn("1.2.3.4");
     when(response.getWriter()).thenReturn(mock(PrintWriter.class));
 
@@ -80,10 +74,7 @@ class RateLimitFilterTest {
 
   @Test
   void usesFirstXForwardedForAddressWhenPresent() throws Exception {
-    when(redisTemplate.opsForValue()).thenReturn(valueOps);
-    when(valueOps.increment(anyString())).thenReturn(1L);
-    when(request.getMethod()).thenReturn("POST");
-    when(request.getRequestURI()).thenReturn("/api/v1/shorten");
+    stubShortenPost(1L);
     when(request.getHeader("X-Forwarded-For")).thenReturn("9.9.9.9, 10.0.0.1");
 
     filter.doFilter(request, response, chain);
@@ -92,5 +83,12 @@ class RateLimitFilterTest {
         .increment(
             "url-shortener:ratelimit:shorten:9.9.9.9:"
                 + (System.currentTimeMillis() / 1000 / WINDOW_SECONDS));
+  }
+
+  private void stubShortenPost(long incrementResult) {
+    when(redisTemplate.opsForValue()).thenReturn(valueOps);
+    when(valueOps.increment(anyString())).thenReturn(incrementResult);
+    when(request.getMethod()).thenReturn("POST");
+    when(request.getRequestURI()).thenReturn("/api/v1/shorten");
   }
 }

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,7 +13,6 @@ import com.example.urlshortener.shorten.ShortUrlRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -24,16 +24,19 @@ import org.springframework.transaction.TransactionStatus;
 @ExtendWith(MockitoExtension.class)
 class ShardedShortUrlOperationsTest {
 
+  private static final List<ShardingProperties.Shard> TWO_SHARDS =
+      List.of(
+          new ShardingProperties.Shard("shard0", "u0", "user", "pw", "u0r", "user", "pw"),
+          new ShardingProperties.Shard("shard1", "u1", "user", "pw", "u1r", "user", "pw"));
+
+  @Mock private ShortUrlRepository repository;
   @Mock private PlatformTransactionManager transactionManager;
 
   @Test
   void delegatesDirectlyToRepositoryWhenShardingDisabled() {
-    ShortUrlRepository repository = mock(ShortUrlRepository.class);
-    ShardingProperties properties = new ShardingProperties(false, List.of());
     when(repository.findByShortUrl("abc"))
         .thenReturn(Optional.of(new ShortUrl("abc", "https://example.com")));
-    ShardedShortUrlOperations operations =
-        new ShardedShortUrlOperations(repository, properties, noRouter(), transactionManager);
+    ShardedShortUrlOperations operations = operations(new ShardingProperties(false, List.of()), null);
 
     Optional<ShortUrl> result = operations.findByShortUrl("abc");
 
@@ -43,39 +46,27 @@ class ShardedShortUrlOperationsTest {
 
   @Test
   void deleteExpiredScattersAcrossEveryShardWhenEnabled() {
-    ShortUrlRepository repository = mock(ShortUrlRepository.class);
     when(repository.deleteByExpiresAtBefore(any(Instant.class))).thenReturn(2L);
     when(transactionManager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
-    ShardingProperties properties =
-        new ShardingProperties(
-            true,
-            List.of(
-                new ShardingProperties.Shard("shard0", "u0", "user", "pw", "u0r", "user", "pw"),
-                new ShardingProperties.Shard("shard1", "u1", "user", "pw", "u1r", "user", "pw")));
-    ConsistentHashShardRouter router = new ConsistentHashShardRouter(List.of("shard0", "shard1"));
     ShardedShortUrlOperations operations =
-        new ShardedShortUrlOperations(repository, properties, routerOf(router), transactionManager);
+        operations(
+            new ShardingProperties(true, TWO_SHARDS),
+            new ConsistentHashShardRouter(List.of("shard0", "shard1")));
 
     long total = operations.deleteExpired(Instant.now());
 
     assertThat(total).isEqualTo(4L);
-    verify(repository, org.mockito.Mockito.times(2)).deleteByExpiresAtBefore(any(Instant.class));
+    verify(repository, times(2)).deleteByExpiresAtBefore(any(Instant.class));
   }
 
   @Test
   void findByLongUrlStopsAtTheFirstShardThatHasAMatch() {
-    ShortUrlRepository repository = mock(ShortUrlRepository.class);
-    ShardingProperties properties =
-        new ShardingProperties(
-            true,
-            List.of(
-                new ShardingProperties.Shard("shard0", "u0", "user", "pw", "u0r", "user", "pw"),
-                new ShardingProperties.Shard("shard1", "u1", "user", "pw", "u1r", "user", "pw")));
-    ConsistentHashShardRouter router = new ConsistentHashShardRouter(List.of("shard0", "shard1"));
     when(repository.findByLongUrl("https://example.com/x"))
         .thenReturn(Optional.of(new ShortUrl("x", "https://example.com/x")));
     ShardedShortUrlOperations operations =
-        new ShardedShortUrlOperations(repository, properties, routerOf(router), transactionManager);
+        operations(
+            new ShardingProperties(true, TWO_SHARDS),
+            new ConsistentHashShardRouter(List.of("shard0", "shard1")));
 
     Optional<ShortUrl> result = operations.findByLongUrl("https://example.com/x");
 
@@ -83,8 +74,10 @@ class ShardedShortUrlOperationsTest {
     verify(repository, never()).save(any());
   }
 
-  private static ObjectProvider<ConsistentHashShardRouter> noRouter() {
-    return routerOf(null);
+  private ShardedShortUrlOperations operations(
+      ShardingProperties properties, ConsistentHashShardRouter router) {
+    return new ShardedShortUrlOperations(
+        repository, properties, routerOf(router), transactionManager);
   }
 
   @SuppressWarnings("unchecked")

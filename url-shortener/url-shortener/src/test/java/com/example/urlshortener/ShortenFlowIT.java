@@ -4,35 +4,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.urlshortener.shorten.dto.ShortenRequest;
 import com.example.urlshortener.shorten.dto.ShortenResponse;
-import com.example.urlshortener.support.IntegrationTestSupport;
+import com.example.urlshortener.support.RestIntegrationTestSupport;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class ShortenFlowIT extends IntegrationTestSupport {
+class ShortenFlowIT extends RestIntegrationTestSupport {
 
-  @LocalServerPort private int port;
-
-  @Autowired private TestRestTemplate restTemplate;
-
-  private String url(String path) {
-    return "http://localhost:" + port + path;
+  private ShortenResponse shorten(String longUrl) {
+    return restTemplate
+        .postForEntity(url("/api/v1/shorten"), new ShortenRequest(longUrl), ShortenResponse.class)
+        .getBody();
   }
 
   @Test
   void shortenThenRedirectReturnsOriginalLongUrl() {
-    ShortenResponse shortened =
-        restTemplate
-            .postForEntity(
-                url("/api/v1/shorten"),
-                new ShortenRequest("https://example.com/some/long/path"),
-                ShortenResponse.class)
-            .getBody();
+    ShortenResponse shortened = shorten("https://example.com/some/long/path");
 
     assertThat(shortened).isNotNull();
     String code = shortened.shortUrl().substring(shortened.shortUrl().lastIndexOf('/') + 1);
@@ -46,16 +33,8 @@ class ShortenFlowIT extends IntegrationTestSupport {
 
   @Test
   void shorteningTheSameLongUrlTwiceReturnsTheSameShortUrl() {
-    ShortenRequest request = new ShortenRequest("https://example.com/idempotent");
-
-    ShortenResponse first =
-        restTemplate
-            .postForEntity(url("/api/v1/shorten"), request, ShortenResponse.class)
-            .getBody();
-    ShortenResponse second =
-        restTemplate
-            .postForEntity(url("/api/v1/shorten"), request, ShortenResponse.class)
-            .getBody();
+    ShortenResponse first = shorten("https://example.com/idempotent");
+    ShortenResponse second = shorten("https://example.com/idempotent");
 
     assertThat(first).isNotNull();
     assertThat(second).isEqualTo(first);

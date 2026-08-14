@@ -3,7 +3,6 @@ package com.example.urlshortener.expiration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -11,15 +10,21 @@ import com.example.urlshortener.sharding.ShortUrlOperations;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class ExpiredUrlPurgeJobTest {
+
+  @Mock private ShortUrlOperations shortUrlOperations;
+  @InjectMocks private ExpiredUrlPurgeJob job;
 
   @Test
   void deletesRowsExpiredAsOfNow() {
-    ShortUrlOperations shortUrlOperations = mock(ShortUrlOperations.class);
     when(shortUrlOperations.deleteExpired(any(Instant.class))).thenReturn(3L);
-    ExpiredUrlPurgeJob job = new ExpiredUrlPurgeJob(shortUrlOperations);
 
     job.purgeExpired();
 
