@@ -1,0 +1,26 @@
+### Shorten a URL (returns the same shortUrl again if longUrl was already shortened)
+### First 5 request -> shard0
+### 6th request -> shard1
+POST http://localhost:8090/api/v1/shorten
+Content-Type: application/json
+
+{"longUrl": "https://example.com/some/very/long/path17?with=query&params=too"}
+
+### Redirect via the short code (use the code from the shortUrl above, e.g. "2")
+GET http://localhost:8090/l
+
+### Redirecting an unknown code returns 404
+GET http://localhost:8090/doesnotexist
+
+### Shortening an invalid URL returns 400
+POST http://localhost:8090/api/v1/shorten
+Content-Type: application/json
+
+{"longUrl": "not-a-url"}
+
+### Per-IP rate limit: repeat this call more than RATELIMIT_LIMIT times (default 10) within
+### RATELIMIT_WINDOW_SECONDS (default 60) to see 429 responses.
+POST http://localhost:8090/api/v1/shorten
+Content-Type: application/json
+
+{"longUrl": "https://example.com/rate-limit-test"}

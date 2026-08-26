@@ -106,11 +106,11 @@ Brings up a dedicated id_ticket DB, two consistent-hash shards (each a real Post
 
 ```bash
 # rows land on different physical shards depending on the shortUrl code's hash
-docker compose exec shard0-primary psql -U urlshortener -d urlshortener -c "SELECT short_url, long_url FROM short_url;"
-docker compose exec shard1-primary psql -U urlshortener -d urlshortener -c "SELECT short_url, long_url FROM short_url;"
+docker exec url-shortener-shard0-primary-1 psql -U urlshortener -d urlshortener -c "SELECT short_url, long_url FROM short_url;"
+docker exec url-shortener-shard1-primary-1 psql -U urlshortener -d urlshortener -c "SELECT short_url, long_url FROM short_url;"
 
 # each replica mirrors its primary via real streaming replication
-docker compose exec shard0-replica psql -U urlshortener -d urlshortener -c "SELECT short_url FROM short_url;"
+docker exec url-shortener-shard0-replica-1 psql -U urlshortener -d urlshortener -c "SELECT short_url FROM short_url;"
 ```
 
 This is a small-scale simulation of the mechanism (2 shards, not the 36.5 TB / 365B-row horizon from `design.md` §2) — see `CLAUDE.md`'s Sharding section for how the routing and replication actually work.
