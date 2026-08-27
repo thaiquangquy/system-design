@@ -1,7 +1,5 @@
 package com.example.urlshortener.redirect;
 
-import com.example.urlshortener.exception.ShortUrlNotFoundException;
-import com.example.urlshortener.shorten.ShortUrlRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -14,15 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class RedirectController {
 
-    private final ShortUrlRepository repository;
+  private final RedirectService redirectService;
 
-    @GetMapping("/{shortUrlCode}")
-    public ResponseEntity<Void> redirect(@PathVariable String shortUrlCode) {
-        String longUrl =
-                repository
-                        .findByShortUrl(shortUrlCode)
-                        .orElseThrow(() -> new ShortUrlNotFoundException(shortUrlCode))
-                        .getLongUrl();
-        return ResponseEntity.status(HttpStatus.FOUND).header(HttpHeaders.LOCATION, longUrl).build();
-    }
+  @GetMapping("/{shortUrlCode}")
+  public ResponseEntity<Void> redirect(@PathVariable String shortUrlCode) {
+    String longUrl = redirectService.resolve(shortUrlCode);
+    return ResponseEntity.status(HttpStatus.FOUND).header(HttpHeaders.LOCATION, longUrl).build();
+  }
 }

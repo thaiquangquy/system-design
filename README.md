@@ -20,8 +20,8 @@
 - Built with Java 21 and Spring Boot 3.3, plain Spring MVC + `RestTemplate` (no Spring Cloud Gateway).
 
 ## [url-shortener](url-shortener/url-shortener/README.md)
-- Converts long URLs into compact base62-encoded short codes and redirects short codes back to the original URL. Phase 1 MVP: single node, PostgreSQL-backed, no cache/rate-limit/expiration/sharding yet. See [`url-shortener/design.md`](url-shortener/design.md) for the full system design and phase 2 roadmap.
-- Built with Java 21 and Spring Boot 3.3.
+- Converts long URLs into compact base62-encoded short codes and redirects short codes back to the original URL. Implements the full [`url-shortener/design.md`](url-shortener/design.md): shorten/redirect, a dedicated ID-ticket generator, Redis cache, per-IP rate limiting, 1-year expiration, and opt-in consistent-hash sharding with real primary/replica streaming replication (`docker compose --profile sharded up`).
+- Built with Java 21 and Spring Boot 3.3, PostgreSQL + Redis.
 
 ## Running everything together
 
@@ -37,4 +37,11 @@ cd url-shortener
 docker compose up --build
 ```
 
-Brings up Postgres and url-shortener (`:8080`), gated on `/actuator/health`. Once healthy, run through [url-shortener/url-shortener/demo.http](url-shortener/url-shortener/demo.http) against `localhost`.
+Brings up Postgres, Redis, and url-shortener (`:8080`), gated on `/actuator/health`. Once healthy, run through [url-shortener/url-shortener/demo.http](url-shortener/url-shortener/demo.http) against `localhost`.
+
+```bash
+cd url-shortener
+docker compose --profile sharded up --build
+```
+
+Brings up the full sharded topology instead: a dedicated id_ticket DB, two consistent-hash shards (each a real Postgres primary + streaming-replication replica), two app instances, and an nginx load balancer on `:8090`. See [url-shortener/url-shortener/README.md](url-shortener/url-shortener/README.md#running-sharded-demo-scale-simulation-of-designmd-710) for how to inspect the shards directly.

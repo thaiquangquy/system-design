@@ -10,6 +10,16 @@ spring:
     hibernate:
       ddl-auto: update
     open-in-view: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 urlshortener:
   base-url: ${BASE_URL:http://localhost:8080}
+  ratelimit:
+    limit: ${RATELIMIT_LIMIT:10}
+    window-seconds: ${RATELIMIT_WINDOW_SECONDS:60}
+  expiration:
+    # Hourly by default: seconds minutes hours day-of-month month day-of-week
+    purge-cron: ${EXPIRATION_PURGE_CRON:0 0 * * * *}

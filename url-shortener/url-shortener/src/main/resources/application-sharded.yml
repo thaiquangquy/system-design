@@ -1,0 +1,25 @@
+spring:
+  jpa:
+    hibernate:
+      # Each physical shard is provisioned via postgres-init/*.sql instead — Hibernate ddl-auto
+      # only ever reaches the default DataSource target (the idgen DB), never the shard targets.
+      ddl-auto: none
+
+urlshortener:
+  sharding:
+    enabled: true
+    shards:
+      - id: shard0
+        primary-url: jdbc:postgresql://${SHARD0_PRIMARY_HOST:shard0-primary}:5432/${SHARD_DB_NAME:urlshortener}
+        primary-username: ${SHARD_DB_USER:urlshortener}
+        primary-password: ${SHARD_DB_PASSWORD:urlshortener}
+        replica-url: jdbc:postgresql://${SHARD0_REPLICA_HOST:shard0-replica}:5432/${SHARD_DB_NAME:urlshortener}
+        replica-username: ${SHARD_DB_USER:urlshortener}
+        replica-password: ${SHARD_DB_PASSWORD:urlshortener}
+      - id: shard1
+        primary-url: jdbc:postgresql://${SHARD1_PRIMARY_HOST:shard1-primary}:5432/${SHARD_DB_NAME:urlshortener}
+        primary-username: ${SHARD_DB_USER:urlshortener}
+        primary-password: ${SHARD_DB_PASSWORD:urlshortener}
+        replica-url: jdbc:postgresql://${SHARD1_REPLICA_HOST:shard1-replica}:5432/${SHARD_DB_NAME:urlshortener}
+        replica-username: ${SHARD_DB_USER:urlshortener}
+        replica-password: ${SHARD_DB_PASSWORD:urlshortener}

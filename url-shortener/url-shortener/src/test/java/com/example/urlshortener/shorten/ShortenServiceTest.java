@@ -2,50 +2,50 @@ package com.example.urlshortener.shorten;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.urlshortener.idgen.IdTicketService;
+import com.example.urlshortener.sharding.ShortUrlOperations;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class ShortenServiceTest {
 
-    @Test
-    void returnsExistingShortCodeWhenLongUrlAlreadyKnown() {
-        ShortUrlRepository repository = mock(ShortUrlRepository.class);
-        ShortUrl existing = new ShortUrl("https://example.com/already-shortened");
-        existing.setId(1L);
-        existing.setShortUrl("1");
-        when(repository.findByLongUrl("https://example.com/already-shortened")).thenReturn(Optional.of(existing));
-        ShortenService service = new ShortenService(repository);
+  @Mock private ShortUrlOperations shortUrlOperations;
+  @Mock private IdTicketService idTicketService;
+  @InjectMocks private ShortenService service;
 
-        String code = service.shorten("https://example.com/already-shortened");
+  @Test
+  void returnsExistingShortCodeWhenLongUrlAlreadyKnown() {
+    ShortUrl existing = new ShortUrl("1", "https://example.com/already-shortened");
+    when(shortUrlOperations.findByLongUrl("https://example.com/already-shortened"))
+        .thenReturn(Optional.of(existing));
 
-        assertThat(code).isEqualTo("1");
-        verify(repository, never()).save(any());
-    }
+    String code = service.shorten("https://example.com/already-shortened");
 
-    @Test
-    void createsAndEncodesShortCodeForNewLongUrl() {
-        ShortUrlRepository repository = mock(ShortUrlRepository.class);
-        when(repository.findByLongUrl("https://example.com/new")).thenReturn(Optional.empty());
-        when(repository.save(any(ShortUrl.class)))
-                .thenAnswer(
-                        invocation -> {
-                            ShortUrl arg = invocation.getArgument(0);
-                            if (arg.getId() == null) {
-                                arg.setId(62L);
-                            }
-                            return arg;
-                        });
-        ShortenService service = new ShortenService(repository);
+    assertThat(code).isEqualTo("1");
+    verify(shortUrlOperations, never()).save(any());
+    verify(idTicketService, never()).nextId();
+  }
 
-        String code = service.shorten("https://example.com/new");
+  @Test
+  void createsAndEncodesShortCodeForNewLongUrl() {
+    when(shortUrlOperations.findByLongUrl("https://example.com/new")).thenReturn(Optional.empty());
+    when(idTicketService.nextId()).thenReturn(62L);
+    when(shortUrlOperations.save(any(ShortUrl.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertThat(code).isEqualTo(Base62Encoder.encode(62L));
-        verify(repository, times(2)).save(any(ShortUrl.class));
-    }
+    String code = service.shorten("https://example.com/new");
+
+    assertThat(code).isEqualTo(Base62Encoder.encode(62L));
+    verify(shortUrlOperations, times(1)).save(any(ShortUrl.class));
+  }
 }

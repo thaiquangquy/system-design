@@ -1,4 +1,16 @@
 services:
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 100mb --maxmemory-policy allkeys-lru
+    ports:
+      - "16379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
   postgres:
     image: postgres:16-alpine
     ports:
@@ -26,9 +38,13 @@ services:
       DB_NAME: urlshortener
       DB_USER: urlshortener
       DB_PASSWORD: urlshortener
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       BASE_URL: http://localhost:8080
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
