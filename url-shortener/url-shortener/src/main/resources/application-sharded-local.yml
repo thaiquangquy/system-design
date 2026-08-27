@@ -1,0 +1,22 @@
+# Activated alongside "sharded" (SPRING_PROFILES_ACTIVE=sharded,sharded-local) when running the
+# app on the host (e.g. debugging in IntelliJ) against the dockerized sharded topology. Overrides
+# application-sharded.yml's shard URLs, which use Docker-network hostnames on port 5432, with
+# localhost + the host-mapped ports published in docker-compose.yml's "sharded" profile services.
+urlshortener:
+  sharding:
+    enabled: true
+    shards:
+      - id: shard0
+        primary-url: jdbc:postgresql://localhost:25433/${SHARD_DB_NAME:urlshortener}
+        primary-username: ${SHARD_DB_USER:urlshortener}
+        primary-password: ${SHARD_DB_PASSWORD:urlshortener}
+        replica-url: jdbc:postgresql://localhost:25434/${SHARD_DB_NAME:urlshortener}
+        replica-username: ${SHARD_DB_USER:urlshortener}
+        replica-password: ${SHARD_DB_PASSWORD:urlshortener}
+      - id: shard1
+        primary-url: jdbc:postgresql://localhost:25435/${SHARD_DB_NAME:urlshortener}
+        primary-username: ${SHARD_DB_USER:urlshortener}
+        primary-password: ${SHARD_DB_PASSWORD:urlshortener}
+        replica-url: jdbc:postgresql://localhost:25436/${SHARD_DB_NAME:urlshortener}
+        replica-username: ${SHARD_DB_USER:urlshortener}
+        replica-password: ${SHARD_DB_PASSWORD:urlshortener}

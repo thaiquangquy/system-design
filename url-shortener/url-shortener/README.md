@@ -99,7 +99,7 @@ curl -i http://localhost:8080/1
 
 ```bash
 cd ..
-docker compose --profile sharded up --build
+docker compose --file docker-compose-sharded up -d
 ```
 
 Brings up a dedicated id_ticket DB, two consistent-hash shards (each a real Postgres primary + streaming-replication replica), two app instances (`SPRING_PROFILES_ACTIVE=sharded`), and an nginx load balancer on `http://localhost:8090`. Use `8090` instead of `8080` for the same requests above. To see the sharding for yourself:
@@ -114,3 +114,24 @@ docker exec url-shortener-shard0-replica-1 psql -U urlshortener -d urlshortener 
 ```
 
 This is a small-scale simulation of the mechanism (2 shards, not the 36.5 TB / 365B-row horizon from `design.md` §2) — see `CLAUDE.md`'s Sharding section for how the routing and replication actually work.
+
+#### Debugging a third instance locally (e.g. in IntelliJ)
+
+To run and debug an app instance on the host, joining the same shard ring as `url-shortener-1`/`url-shortener-2`, instead of building/running it as a container:
+
+```bash
+cd ..
+docker compose --file docker-compose-sharded up -d
+```
+
+Create a Run/Debug configuration for `com.example.urlshortener.UrlShortenerApplication` with:
+
+```
+SPRING_PROFILES_ACTIVE=sharded-local
+DB_HOST=localhost:25432
+REDIS_HOST=localhost
+REDIS_PORT=16379
+BASE_URL=http://localhost:8090
+```
+
+The `sharded-local` profile (`application-sharded-local.yml`) overrides the shard JDBC URLs to use `localhost` + the host-mapped ports (`25433`-`25436`) published by the `sharded` compose services, instead of the Docker-network hostnames `application-sharded.yml` uses by default. `nginx.conf`'s upstream includes `host.docker.internal:8080` for exactly this instance, so requests to `http://localhost:8090` will round-robin across it too — start `url-shortener-1`/`url-shortener-2` as well if you want the full 3-way rotation, or leave them out to send everything to your local instance.
