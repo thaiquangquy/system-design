@@ -10,7 +10,7 @@
 
 ## Different types of notification
 ### iOS push notification
-Provider → Firebase Cloud Messaging (FCM) → Android
+Provider → Apple Push Notification Service(APNS) → iOS
 
 - Provider: build and send notification request to Apple Push Notification Service(APNS)
   - Device token: unique device identifier
@@ -39,6 +39,17 @@ one user could have multiple devices (1-n relation)
   - Need to support multiple 3rd servers with easy to extend
 - 3rd party services: Delivering notification to users
 
+```mermaid
+flowchart LR
+    S["Client Service"] --> NS["Notification System<br/>(single server)"]
+    NS --> TP1["APNs / FCM"]
+    NS --> TP2["SMS service"]
+    NS --> TP3["Email service"]
+    TP1 --> D1["iOS / Android"]
+    TP2 --> D2["SMS"]
+    TP3 --> D3["Email"]
+```
+
 ### Cons
 - Single point of failure
 - Hard to scale
@@ -60,7 +71,7 @@ one user could have multiple devices (1-n relation)
 - 3rd party services: Delivering notification to users
 - Cache: user info, device info, notification template
 - DB: store data of user, notification, settings
-- Message queue: each notification type ha a distinct message queue
+- Message queue: each notification type has a distinct message queue
 - Workers: servers that pull notification events from message queues and send to 3rd services
 
 ### Flow
@@ -109,3 +120,55 @@ body:
 ```
 
 # System design deep dive
+
+## Reliability
+- Never lost notification
+  - Persist notification data in database
+  - Implement retry mechanism
+- Dedupe mechanism
+  - When notification arrived, check its id, if sent -> discard
+## Additional components and considerations
+- Notification template
+  - Body
+  - CTA
+- Notification setting
+  - channel: push notification email or SMS
+  - opt-in choice
+- Rate limiting
+  - Limit the number of noti user can receive
+- Retry mechanism
+- Need appKey & appSecret to secure push notification APIs. Authorization and authentication needed
+- Monitor the queued notification: add or remove workers to adjust process speed
+- Events tracking
+  - Analytics user behavior: start, pending, error, sent, deliver, click, unsubscribe
+
+## Final design
+
+```mermaid
+flowchart LR
+ServiceN["Service N"]
+NS["Notification servers<br/>- Authentication<br/>- Rate limit"]
+Cache[("CACHE")]
+DB[("DB<br/>device setting<br/>user info")]
+IOSPN["iOS PN<br/>(queue)"]
+Workers["Workers"]
+APNs(["APNs"])
+iOS["iOS"]
+Analytics["Analytics service"]
+Template["Notification template"]
+Log[("Notification log")]
+
+    ServiceN --> NS
+    NS --> IOSPN
+    NS -- "send pending" --> Analytics
+    NS --> Cache
+    Cache --> DB
+    IOSPN --> Workers
+    Workers -- "retry on error" --> IOSPN
+    Workers -- "sent" --> Analytics
+    Workers --> APNs
+    APNs --> iOS
+    iOS -- "click tracking" --> Analytics
+    Workers --> Template
+    Workers --> Log
+```

@@ -3,3 +3,4 @@
 rate-limiter/api-gateway-ratelimiter/.idea
 key-value-store/kv-store/data/
 url-shortener/url-shortener/.env
+notification-system/.idea
