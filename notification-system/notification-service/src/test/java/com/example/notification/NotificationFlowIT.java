@@ -19,86 +19,91 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 /** Smoke test: all three channel endpoints, end to end, against H2 + stub providers. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 class NotificationFlowIT {
 
-  @LocalServerPort private int port;
-  @Autowired private TestRestTemplate restTemplate;
-  @Autowired private UserRepository userRepository;
-  @Autowired private DeviceRepository deviceRepository;
+    @LocalServerPort
+    private int port;
 
-  private User user;
+    @Autowired
+    private TestRestTemplate restTemplate;
 
-  @BeforeEach
-  void setUp() {
-    user = userRepository.save(new User("user@example.com", "+15551234567"));
-    deviceRepository.save(new Device(user, Platform.IOS, "device-token-1"));
-  }
+    @Autowired
+    private UserRepository userRepository;
 
-  @Test
-  void sendsPush() {
-    var response = post("/v1/notifications/push", pushBody());
+    @Autowired
+    private DeviceRepository deviceRepository;
 
-    assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-    assertThat(response.getBody().status()).isEqualTo(SendStatus.SENT);
-  }
+    private User user;
 
-  @Test
-  void sendsSms() {
-    var response = post("/v1/notifications/sms", contentOnlyBody());
+    @BeforeEach
+    void setUp() {
+        user = userRepository.save(new User("user@example.com", "+15551234567"));
+        deviceRepository.save(new Device(user, Platform.IOS, "device-token-1"));
+    }
 
-    assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-    assertThat(response.getBody().status()).isEqualTo(SendStatus.SENT);
-  }
+    @Test
+    void sendsPush() {
+        var response = post("/v1/notifications/push", pushBody());
 
-  @Test
-  void sendsEmail() {
-    var response = post("/v1/notifications/email", emailBody());
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody().status()).isEqualTo(SendStatus.SENT);
+    }
 
-    assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-    assertThat(response.getBody().status()).isEqualTo(SendStatus.SENT);
-  }
+    @Test
+    void sendsSms() {
+        var response = post("/v1/notifications/sms", contentOnlyBody());
 
-  private org.springframework.http.ResponseEntity<NotificationResponse> post(String path, String body) {
-    var headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    return restTemplate.postForEntity(
-        "http://localhost:" + port + path, new HttpEntity<>(body, headers), NotificationResponse.class);
-  }
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody().status()).isEqualTo(SendStatus.SENT);
+    }
 
-  private String pushBody() {
-    return """
+    @Test
+    void sendsEmail() {
+        var response = post("/v1/notifications/email", emailBody());
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody().status()).isEqualTo(SendStatus.SENT);
+    }
+
+    private ResponseEntity<NotificationResponse> post(String path, String body) {
+        var headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return restTemplate.postForEntity(
+                "http://localhost:" + port + path, new HttpEntity<>(body, headers), NotificationResponse.class);
+    }
+
+    private String pushBody() {
+        return """
         {
           "to": [{"user_id": %d}],
           "subject": "Hello",
           "content": [{"type": "text/plain", "value": "Hi there"}]
         }
-        """
-        .formatted(user.getId());
-  }
+        """.formatted(user.getId());
+    }
 
-  private String contentOnlyBody() {
-    return """
+    private String contentOnlyBody() {
+        return """
         {
           "to": [{"user_id": %d}],
           "content": [{"type": "text/plain", "value": "Hi there"}]
         }
-        """
-        .formatted(user.getId());
-  }
+        """.formatted(user.getId());
+    }
 
-  private String emailBody() {
-    return """
+    private String emailBody() {
+        return """
         {
           "to": [{"user_id": %d}],
           "from": {"email": "noreply@example.com"},
           "subject": "Hello",
           "content": [{"type": "text/plain", "value": "Hi there"}]
         }
-        """
-        .formatted(user.getId());
-  }
+        """.formatted(user.getId());
+    }
 }

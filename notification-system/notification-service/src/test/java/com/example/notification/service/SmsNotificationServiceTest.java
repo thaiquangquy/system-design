@@ -25,53 +25,56 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class SmsNotificationServiceTest {
 
-  @Mock private UserRepository userRepository;
-  @Mock private SmsProvider smsProvider;
-  @InjectMocks private SmsNotificationService service;
+    @Mock
+    private UserRepository userRepository;
 
-  private static NotificationRequest requestFor(Long userId) {
-    return new NotificationRequest(
-        List.of(new RecipientRef(userId)), null, null, List.of(new ContentPart("text/plain", "Hi")));
-  }
+    @Mock
+    private SmsProvider smsProvider;
 
-  @Test
-  void sendsToUserPhoneAndReturnsSent() {
-    var user = new User(null, "+15551234567");
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-    when(smsProvider.send(any())).thenReturn(SendResult.success("msg-1"));
+    @InjectMocks
+    private SmsNotificationService service;
 
-    var response = service.send(requestFor(1L));
+    private static NotificationRequest requestFor(Long userId) {
+        return new NotificationRequest(
+                List.of(new RecipientRef(userId)), null, null, List.of(new ContentPart("text/plain", "Hi")));
+    }
 
-    assertThat(response.status()).isEqualTo(SendStatus.SENT);
-    assertThat(response.providerMessageId()).isEqualTo("msg-1");
-  }
+    @Test
+    void sendsToUserPhoneAndReturnsSent() {
+        var user = new User(null, "+15551234567");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(smsProvider.send(any())).thenReturn(SendResult.success("msg-1"));
 
-  @Test
-  void returnsFailedWhenProviderFails() {
-    var user = new User(null, "+15551234567");
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-    when(smsProvider.send(any())).thenReturn(SendResult.failure("provider down"));
+        var response = service.send(requestFor(1L));
 
-    var response = service.send(requestFor(1L));
+        assertThat(response.status()).isEqualTo(SendStatus.SENT);
+        assertThat(response.providerMessageId()).isEqualTo("msg-1");
+    }
 
-    assertThat(response.status()).isEqualTo(SendStatus.FAILED);
-    assertThat(response.error()).isEqualTo("provider down");
-  }
+    @Test
+    void returnsFailedWhenProviderFails() {
+        var user = new User(null, "+15551234567");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(smsProvider.send(any())).thenReturn(SendResult.failure("provider down"));
 
-  @Test
-  void throwsWhenUserNotFound() {
-    when(userRepository.findById(99L)).thenReturn(Optional.empty());
+        var response = service.send(requestFor(1L));
 
-    assertThatThrownBy(() -> service.send(requestFor(99L)))
-        .isInstanceOf(NotificationBadRequestException.class);
-  }
+        assertThat(response.status()).isEqualTo(SendStatus.FAILED);
+        assertThat(response.error()).isEqualTo("provider down");
+    }
 
-  @Test
-  void throwsWhenUserHasNoPhone() {
-    var user = new User("a@example.com", null);
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+    @Test
+    void throwsWhenUserNotFound() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> service.send(requestFor(1L)))
-        .isInstanceOf(NotificationBadRequestException.class);
-  }
+        assertThatThrownBy(() -> service.send(requestFor(99L))).isInstanceOf(NotificationBadRequestException.class);
+    }
+
+    @Test
+    void throwsWhenUserHasNoPhone() {
+        var user = new User("a@example.com", null);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> service.send(requestFor(1L))).isInstanceOf(NotificationBadRequestException.class);
+    }
 }

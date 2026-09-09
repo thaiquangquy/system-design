@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class SmsController {
 
-  private final NotificationServiceRegistry notificationServiceRegistry;
+    private final NotificationServiceRegistry notificationServiceRegistry;
 
-  @PostMapping("/sms")
-  public NotificationResponse sendSms(@Valid @RequestBody NotificationRequest request) {
-    return notificationServiceRegistry.get(NotificationChannel.SMS).send(request);
-  }
+    @PostMapping("/sms")
+    public NotificationResponse sendSms(@Valid @RequestBody NotificationRequest request) {
+        return notificationServiceRegistry.get(NotificationChannel.SMS).send(request);
+    }
 }

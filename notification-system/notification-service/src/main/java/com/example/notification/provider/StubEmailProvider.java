@@ -9,14 +9,14 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class StubEmailProvider implements EmailProvider {
 
-  @Override
-  public SendResult send(EmailSendCommand command) {
-    log.info(
-        "Stub email send: from={} to={} subject={} content={}",
-        command.fromEmail(),
-        command.toEmail(),
-        command.subject(),
-        command.content());
-    return SendResult.success("stub-email-" + UUID.randomUUID());
-  }
+    @Override
+    public SendResult send(EmailSendCommand command) {
+        log.info(
+                "Stub email send: from={} to={} subject={} content={}",
+                command.fromEmail(),
+                command.toEmail(),
+                command.subject(),
+                command.content());
+        return SendResult.success("stub-email-" + UUID.randomUUID());
+    }
 }

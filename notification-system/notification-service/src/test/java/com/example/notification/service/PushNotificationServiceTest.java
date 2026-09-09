@@ -30,61 +30,66 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class PushNotificationServiceTest {
 
-  @Mock private UserRepository userRepository;
-  @Mock private DeviceRepository deviceRepository;
-  @Mock private PushProvider pushProvider;
-  @InjectMocks private PushNotificationService service;
+    @Mock
+    private UserRepository userRepository;
 
-  private static NotificationRequest requestFor(Long userId) {
-    return new NotificationRequest(
-        List.of(new RecipientRef(userId)), null, "Hello", List.of(new ContentPart("text/plain", "Hi")));
-  }
+    @Mock
+    private DeviceRepository deviceRepository;
 
-  @Test
-  void sendsToEveryDeviceAndReturnsSentWhenAnySucceeds() {
-    var user = new User("a@example.com", null);
-    var device1 = new Device(user, Platform.IOS, "token-1");
-    var device2 = new Device(user, Platform.ANDROID, "token-2");
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-    when(deviceRepository.findByUserId(1L)).thenReturn(List.of(device1, device2));
-    when(pushProvider.send(any())).thenReturn(SendResult.success("msg-1"));
+    @Mock
+    private PushProvider pushProvider;
 
-    var response = service.send(requestFor(1L));
+    @InjectMocks
+    private PushNotificationService service;
 
-    assertThat(response.status()).isEqualTo(SendStatus.SENT);
-    assertThat(response.providerMessageId()).isEqualTo("msg-1");
-    verify(pushProvider, times(2)).send(any());
-  }
+    private static NotificationRequest requestFor(Long userId) {
+        return new NotificationRequest(
+                List.of(new RecipientRef(userId)), null, "Hello", List.of(new ContentPart("text/plain", "Hi")));
+    }
 
-  @Test
-  void returnsFailedWhenEveryDeviceSendFails() {
-    var user = new User("a@example.com", null);
-    var device = new Device(user, Platform.IOS, "token-1");
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-    when(deviceRepository.findByUserId(1L)).thenReturn(List.of(device));
-    when(pushProvider.send(any())).thenReturn(SendResult.failure("provider down"));
+    @Test
+    void sendsToEveryDeviceAndReturnsSentWhenAnySucceeds() {
+        var user = new User("a@example.com", null);
+        var device1 = new Device(user, Platform.IOS, "token-1");
+        var device2 = new Device(user, Platform.ANDROID, "token-2");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(deviceRepository.findByUserId(1L)).thenReturn(List.of(device1, device2));
+        when(pushProvider.send(any())).thenReturn(SendResult.success("msg-1"));
 
-    var response = service.send(requestFor(1L));
+        var response = service.send(requestFor(1L));
 
-    assertThat(response.status()).isEqualTo(SendStatus.FAILED);
-    assertThat(response.error()).isEqualTo("provider down");
-  }
+        assertThat(response.status()).isEqualTo(SendStatus.SENT);
+        assertThat(response.providerMessageId()).isEqualTo("msg-1");
+        verify(pushProvider, times(2)).send(any());
+    }
 
-  @Test
-  void throwsWhenUserNotFound() {
-    when(userRepository.findById(99L)).thenReturn(Optional.empty());
+    @Test
+    void returnsFailedWhenEveryDeviceSendFails() {
+        var user = new User("a@example.com", null);
+        var device = new Device(user, Platform.IOS, "token-1");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(deviceRepository.findByUserId(1L)).thenReturn(List.of(device));
+        when(pushProvider.send(any())).thenReturn(SendResult.failure("provider down"));
 
-    assertThatThrownBy(() -> service.send(requestFor(99L)))
-        .isInstanceOf(NotificationBadRequestException.class);
-  }
+        var response = service.send(requestFor(1L));
 
-  @Test
-  void throwsWhenUserHasNoDevices() {
-    var user = new User("a@example.com", null);
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-    when(deviceRepository.findByUserId(1L)).thenReturn(List.of());
+        assertThat(response.status()).isEqualTo(SendStatus.FAILED);
+        assertThat(response.error()).isEqualTo("provider down");
+    }
 
-    assertThatThrownBy(() -> service.send(requestFor(1L)))
-        .isInstanceOf(NotificationBadRequestException.class);
-  }
+    @Test
+    void throwsWhenUserNotFound() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.send(requestFor(99L))).isInstanceOf(NotificationBadRequestException.class);
+    }
+
+    @Test
+    void throwsWhenUserHasNoDevices() {
+        var user = new User("a@example.com", null);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(deviceRepository.findByUserId(1L)).thenReturn(List.of());
+
+        assertThatThrownBy(() -> service.send(requestFor(1L))).isInstanceOf(NotificationBadRequestException.class);
+    }
 }

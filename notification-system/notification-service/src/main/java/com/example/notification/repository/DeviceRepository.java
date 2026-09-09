@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DeviceRepository extends JpaRepository<Device, Long> {
 
-  List<Device> findByUserId(Long userId);
+    List<Device> findByUserId(Long userId);
 }

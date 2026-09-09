@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PushController {
 
-  private final NotificationServiceRegistry notificationServiceRegistry;
+    private final NotificationServiceRegistry notificationServiceRegistry;
 
-  @PostMapping("/push")
-  public NotificationResponse sendPush(@Valid @RequestBody NotificationRequest request) {
-    return notificationServiceRegistry.get(NotificationChannel.PUSH).send(request);
-  }
+    @PostMapping("/push")
+    public NotificationResponse sendPush(@Valid @RequestBody NotificationRequest request) {
+        return notificationServiceRegistry.get(NotificationChannel.PUSH).send(request);
+    }
 }

@@ -23,26 +23,27 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(EmailController.class)
 class EmailControllerTest {
 
-  @Autowired private MockMvc mockMvc;
-  @MockitoBean private NotificationServiceRegistry notificationServiceRegistry;
-  private NotificationService emailNotificationService;
+    @Autowired
+    private MockMvc mockMvc;
 
-  @BeforeEach
-  void setUp() {
-    emailNotificationService = mock(NotificationService.class);
-    when(notificationServiceRegistry.get(NotificationChannel.EMAIL)).thenReturn(emailNotificationService);
-  }
+    @MockitoBean
+    private NotificationServiceRegistry notificationServiceRegistry;
 
-  @Test
-  void returnsSentResponseWhenServiceSucceeds() throws Exception {
-    when(emailNotificationService.send(any())).thenReturn(NotificationResponse.sent("msg-1"));
+    private NotificationService emailNotificationService;
 
-    mockMvc
-        .perform(
-            post("/v1/notifications/email")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    """
+    @BeforeEach
+    void setUp() {
+        emailNotificationService = mock(NotificationService.class);
+        when(notificationServiceRegistry.get(NotificationChannel.EMAIL)).thenReturn(emailNotificationService);
+    }
+
+    @Test
+    void returnsSentResponseWhenServiceSucceeds() throws Exception {
+        when(emailNotificationService.send(any())).thenReturn(NotificationResponse.sent("msg-1"));
+
+        mockMvc.perform(post("/v1/notifications/email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
                     {
                       "to": [{"user_id": 1}],
                       "from": {"email": "noreply@example.com"},
@@ -50,30 +51,27 @@ class EmailControllerTest {
                       "content": [{"type": "text/plain", "value": "Hi there"}]
                     }
                     """))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("SENT"))
-        .andExpect(jsonPath("$.provider_message_id").value("msg-1"));
-  }
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SENT"))
+                .andExpect(jsonPath("$.provider_message_id").value("msg-1"));
+    }
 
-  @Test
-  void returnsBadRequestWhenServiceRejectsRequest() throws Exception {
-    when(emailNotificationService.send(any()))
-        .thenThrow(new NotificationBadRequestException("User 1 has no email on file"));
+    @Test
+    void returnsBadRequestWhenServiceRejectsRequest() throws Exception {
+        when(emailNotificationService.send(any()))
+                .thenThrow(new NotificationBadRequestException("User 1 has no valid email"));
 
-    mockMvc
-        .perform(
-            post("/v1/notifications/email")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    """
+        mockMvc.perform(post("/v1/notifications/email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
                     {
                       "to": [{"user_id": 1}],
                       "subject": "Hello",
                       "content": [{"type": "text/plain", "value": "Hi there"}]
                     }
                     """))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.status").value("FAILED"))
-        .andExpect(jsonPath("$.error").value("User 1 has no email on file"));
-  }
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("FAILED"))
+                .andExpect(jsonPath("$.error").value("User 1 has no valid email"));
+    }
 }

@@ -9,8 +9,8 @@ import com.example.notification.domain.User;
 import com.example.notification.dto.ContentPart;
 import com.example.notification.dto.NotificationRequest;
 import com.example.notification.dto.RecipientRef;
-import com.example.notification.dto.Sender;
 import com.example.notification.dto.SendStatus;
+import com.example.notification.dto.Sender;
 import com.example.notification.exception.NotificationBadRequestException;
 import com.example.notification.provider.EmailProvider;
 import com.example.notification.provider.SendResult;
@@ -26,56 +26,59 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class EmailNotificationServiceTest {
 
-  @Mock private UserRepository userRepository;
-  @Mock private EmailProvider emailProvider;
-  @InjectMocks private EmailNotificationService service;
+    @Mock
+    private UserRepository userRepository;
 
-  private static NotificationRequest requestFor(Long userId) {
-    return new NotificationRequest(
-        List.of(new RecipientRef(userId)),
-        new Sender("noreply@example.com"),
-        "Subject",
-        List.of(new ContentPart("text/plain", "Hi")));
-  }
+    @Mock
+    private EmailProvider emailProvider;
 
-  @Test
-  void sendsToUserEmailAndReturnsSent() {
-    var user = new User("a@example.com", null);
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-    when(emailProvider.send(any())).thenReturn(SendResult.success("msg-1"));
+    @InjectMocks
+    private EmailNotificationService service;
 
-    var response = service.send(requestFor(1L));
+    private static NotificationRequest requestFor(Long userId) {
+        return new NotificationRequest(
+                List.of(new RecipientRef(userId)),
+                new Sender("noreply@example.com"),
+                "Subject",
+                List.of(new ContentPart("text/plain", "Hi")));
+    }
 
-    assertThat(response.status()).isEqualTo(SendStatus.SENT);
-    assertThat(response.providerMessageId()).isEqualTo("msg-1");
-  }
+    @Test
+    void sendsToUserEmailAndReturnsSent() {
+        var user = new User("a@example.com", null);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(emailProvider.send(any())).thenReturn(SendResult.success("msg-1"));
 
-  @Test
-  void returnsFailedWhenProviderFails() {
-    var user = new User("a@example.com", null);
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-    when(emailProvider.send(any())).thenReturn(SendResult.failure("provider down"));
+        var response = service.send(requestFor(1L));
 
-    var response = service.send(requestFor(1L));
+        assertThat(response.status()).isEqualTo(SendStatus.SENT);
+        assertThat(response.providerMessageId()).isEqualTo("msg-1");
+    }
 
-    assertThat(response.status()).isEqualTo(SendStatus.FAILED);
-    assertThat(response.error()).isEqualTo("provider down");
-  }
+    @Test
+    void returnsFailedWhenProviderFails() {
+        var user = new User("a@example.com", null);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(emailProvider.send(any())).thenReturn(SendResult.failure("provider down"));
 
-  @Test
-  void throwsWhenUserNotFound() {
-    when(userRepository.findById(99L)).thenReturn(Optional.empty());
+        var response = service.send(requestFor(1L));
 
-    assertThatThrownBy(() -> service.send(requestFor(99L)))
-        .isInstanceOf(NotificationBadRequestException.class);
-  }
+        assertThat(response.status()).isEqualTo(SendStatus.FAILED);
+        assertThat(response.error()).isEqualTo("provider down");
+    }
 
-  @Test
-  void throwsWhenUserHasNoEmail() {
-    var user = new User(null, "+15551234567");
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+    @Test
+    void throwsWhenUserNotFound() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> service.send(requestFor(1L)))
-        .isInstanceOf(NotificationBadRequestException.class);
-  }
+        assertThatThrownBy(() -> service.send(requestFor(99L))).isInstanceOf(NotificationBadRequestException.class);
+    }
+
+    @Test
+    void throwsWhenUserHasNoEmail() {
+        var user = new User(null, "+15551234567");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> service.send(requestFor(1L))).isInstanceOf(NotificationBadRequestException.class);
+    }
 }

@@ -23,72 +23,67 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(PushController.class)
 class PushControllerTest {
 
-  @Autowired private MockMvc mockMvc;
-  @MockitoBean private NotificationServiceRegistry notificationServiceRegistry;
-  private NotificationService pushNotificationService;
+    @Autowired
+    private MockMvc mockMvc;
 
-  @BeforeEach
-  void setUp() {
-    pushNotificationService = mock(NotificationService.class);
-    when(notificationServiceRegistry.get(NotificationChannel.PUSH)).thenReturn(pushNotificationService);
-  }
+    @MockitoBean
+    private NotificationServiceRegistry notificationServiceRegistry;
 
-  @Test
-  void returnsSentResponseWhenServiceSucceeds() throws Exception {
-    when(pushNotificationService.send(any())).thenReturn(NotificationResponse.sent("msg-1"));
+    private NotificationService pushNotificationService;
 
-    mockMvc
-        .perform(
-            post("/v1/notifications/push")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    """
+    @BeforeEach
+    void setUp() {
+        pushNotificationService = mock(NotificationService.class);
+        when(notificationServiceRegistry.get(NotificationChannel.PUSH)).thenReturn(pushNotificationService);
+    }
+
+    @Test
+    void returnsSentResponseWhenServiceSucceeds() throws Exception {
+        when(pushNotificationService.send(any())).thenReturn(NotificationResponse.sent("msg-1"));
+
+        mockMvc.perform(post("/v1/notifications/push")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
                     {
                       "to": [{"user_id": 1}],
                       "subject": "Hello",
                       "content": [{"type": "text/plain", "value": "Hi there"}]
                     }
                     """))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("SENT"))
-        .andExpect(jsonPath("$.provider_message_id").value("msg-1"));
-  }
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SENT"))
+                .andExpect(jsonPath("$.provider_message_id").value("msg-1"));
+    }
 
-  @Test
-  void returnsBadRequestWhenServiceRejectsRequest() throws Exception {
-    when(pushNotificationService.send(any()))
-        .thenThrow(new NotificationBadRequestException("User 1 has no registered devices"));
+    @Test
+    void returnsBadRequestWhenServiceRejectsRequest() throws Exception {
+        when(pushNotificationService.send(any()))
+                .thenThrow(new NotificationBadRequestException("User 1 has no registered devices"));
 
-    mockMvc
-        .perform(
-            post("/v1/notifications/push")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    """
+        mockMvc.perform(post("/v1/notifications/push")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
                     {
                       "to": [{"user_id": 1}],
                       "subject": "Hello",
                       "content": [{"type": "text/plain", "value": "Hi there"}]
                     }
                     """))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.status").value("FAILED"))
-        .andExpect(jsonPath("$.error").value("User 1 has no registered devices"));
-  }
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("FAILED"))
+                .andExpect(jsonPath("$.error").value("User 1 has no registered devices"));
+    }
 
-  @Test
-  void returnsBadRequestOnMissingRecipient() throws Exception {
-    mockMvc
-        .perform(
-            post("/v1/notifications/push")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    """
+    @Test
+    void returnsBadRequestOnMissingRecipient() throws Exception {
+        mockMvc.perform(post("/v1/notifications/push")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
                     {
                       "to": [],
                       "content": [{"type": "text/plain", "value": "Hi there"}]
                     }
                     """))
-        .andExpect(status().isBadRequest());
-  }
+                .andExpect(status().isBadRequest());
+    }
 }

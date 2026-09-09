@@ -13,31 +13,30 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class EmailNotificationService implements NotificationService {
 
-  private final UserRepository userRepository;
-  private final EmailProvider emailProvider;
+    private final UserRepository userRepository;
+    private final EmailProvider emailProvider;
 
-  @Override
-  public NotificationChannel channel() {
-    return NotificationChannel.EMAIL;
-  }
-
-  @Override
-  public NotificationResponse send(NotificationRequest request) {
-    var userId = request.firstRecipientUserId();
-    var user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new NotificationBadRequestException("User not found: " + userId));
-
-    if (user.getEmail() == null || user.getEmail().isBlank()) {
-      throw new NotificationBadRequestException("User " + userId + " has no email on file");
+    @Override
+    public NotificationChannel channel() {
+        return NotificationChannel.EMAIL;
     }
 
-    var fromEmail = request.from() != null ? request.from().email() : null;
-    var command = new EmailSendCommand(fromEmail, user.getEmail(), request.subject(), request.firstContentValue());
-    var result = emailProvider.send(command);
-    return result.success()
-        ? NotificationResponse.sent(result.providerMessageId())
-        : NotificationResponse.failed(result.errorMessage());
-  }
+    @Override
+    public NotificationResponse send(NotificationRequest request) {
+        var userId = request.firstRecipientUserId();
+        var user = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new NotificationBadRequestException("User not found: " + userId));
+
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            throw new NotificationBadRequestException("User " + userId + " has no valid email");
+        }
+
+        var fromEmail = request.from() != null ? request.from().email() : null;
+        var command = new EmailSendCommand(fromEmail, user.getEmail(), request.subject(), request.firstContentValue());
+        var result = emailProvider.send(command);
+        return result.success()
+                ? NotificationResponse.sent(result.providerMessageId())
+                : NotificationResponse.failed(result.errorMessage());
+    }
 }

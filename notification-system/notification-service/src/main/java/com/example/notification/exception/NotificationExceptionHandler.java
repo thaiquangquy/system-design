@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class NotificationExceptionHandler {
 
-  @ExceptionHandler(NotificationBadRequestException.class)
-  public ResponseEntity<NotificationResponse> handleBadRequest(NotificationBadRequestException ex) {
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(NotificationResponse.failed(ex.getMessage()));
-  }
+    @ExceptionHandler(NotificationBadRequestException.class)
+    public ResponseEntity<NotificationResponse> handleBadRequest(NotificationBadRequestException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(NotificationResponse.failed(ex.getMessage()));
+    }
 }

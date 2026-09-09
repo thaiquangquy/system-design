@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class EmailController {
 
-  private final NotificationServiceRegistry notificationServiceRegistry;
+    private final NotificationServiceRegistry notificationServiceRegistry;
 
-  @PostMapping("/email")
-  public NotificationResponse sendEmail(@Valid @RequestBody NotificationRequest request) {
-    return notificationServiceRegistry.get(NotificationChannel.EMAIL).send(request);
-  }
+    @PostMapping("/email")
+    public NotificationResponse sendEmail(@Valid @RequestBody NotificationRequest request) {
+        return notificationServiceRegistry.get(NotificationChannel.EMAIL).send(request);
+    }
 }

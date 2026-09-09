@@ -9,9 +9,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class StubSmsProvider implements SmsProvider {
 
-  @Override
-  public SendResult send(SmsSendCommand command) {
-    log.info("Stub SMS send: phoneNumber={} content={}", command.phoneNumber(), command.content());
-    return SendResult.success("stub-sms-" + UUID.randomUUID());
-  }
+    @Override
+    public SendResult send(SmsSendCommand command) {
+        log.info("Stub SMS send: phoneNumber={} content={}", command.phoneNumber(), command.content());
+        return SendResult.success("stub-sms-" + UUID.randomUUID());
+    }
 }

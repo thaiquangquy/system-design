@@ -16,30 +16,30 @@ import lombok.*;
 
 @Entity
 @Table(
-    name = "devices",
-    indexes = {@Index(name = "idx_device_user_id", columnList = "user_id")})
+        name = "devices",
+        indexes = {@Index(name = "idx_device_user_id", columnList = "user_id")})
 @NoArgsConstructor
 @Data
 public class Device {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private User user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "platform", nullable = false)
-  private Platform platform;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "platform", nullable = false)
+    private Platform platform;
 
-  @Column(name = "token", nullable = false)
-  private String token;
+    @Column(name = "token", nullable = false)
+    private String token;
 
-  public Device(User user, Platform platform, String token) {
-    this.user = user;
-    this.platform = platform;
-    this.token = token;
-  }
+    public Device(User user, Platform platform, String token) {
+        this.user = user;
+        this.platform = platform;
+        this.token = token;
+    }
 }
