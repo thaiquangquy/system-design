@@ -5,5 +5,7 @@ import com.example.notification.dto.NotificationResponse;
 
 public interface NotificationService {
 
+  NotificationChannel channel();
+
   NotificationResponse send(NotificationRequest request);
 }

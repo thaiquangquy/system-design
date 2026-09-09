@@ -19,6 +19,11 @@ public class PushNotificationService implements NotificationService {
   private final PushProvider pushProvider;
 
   @Override
+  public NotificationChannel channel() {
+    return NotificationChannel.PUSH;
+  }
+
+  @Override
   public NotificationResponse send(NotificationRequest request) {
     var userId = request.firstRecipientUserId();
     userRepository

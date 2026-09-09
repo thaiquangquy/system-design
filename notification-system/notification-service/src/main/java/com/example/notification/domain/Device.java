@@ -12,17 +12,14 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(
     name = "devices",
     indexes = {@Index(name = "idx_device_user_id", columnList = "user_id")})
-@Getter
-@Setter
 @NoArgsConstructor
+@Data
 public class Device {
 
   @Id

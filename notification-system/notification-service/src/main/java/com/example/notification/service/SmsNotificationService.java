@@ -17,6 +17,11 @@ public class SmsNotificationService implements NotificationService {
   private final SmsProvider smsProvider;
 
   @Override
+  public NotificationChannel channel() {
+    return NotificationChannel.SMS;
+  }
+
+  @Override
   public NotificationResponse send(NotificationRequest request) {
     var userId = request.firstRecipientUserId();
     var user =

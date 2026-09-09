@@ -2,7 +2,8 @@ package com.example.notification.controller;
 
 import com.example.notification.dto.NotificationRequest;
 import com.example.notification.dto.NotificationResponse;
-import com.example.notification.service.SmsNotificationService;
+import com.example.notification.service.NotificationChannel;
+import com.example.notification.service.NotificationServiceRegistry;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,10 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class SmsController {
 
-  private final SmsNotificationService smsNotificationService;
+  private final NotificationServiceRegistry notificationServiceRegistry;
 
   @PostMapping("/sms")
   public NotificationResponse sendSms(@Valid @RequestBody NotificationRequest request) {
-    return smsNotificationService.send(request);
+    return notificationServiceRegistry.get(NotificationChannel.SMS).send(request);
   }
 }

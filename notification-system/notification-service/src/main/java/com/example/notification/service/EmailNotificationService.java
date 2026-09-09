@@ -17,6 +17,11 @@ public class EmailNotificationService implements NotificationService {
   private final EmailProvider emailProvider;
 
   @Override
+  public NotificationChannel channel() {
+    return NotificationChannel.EMAIL;
+  }
+
+  @Override
   public NotificationResponse send(NotificationRequest request) {
     var userId = request.firstRecipientUserId();
     var user =

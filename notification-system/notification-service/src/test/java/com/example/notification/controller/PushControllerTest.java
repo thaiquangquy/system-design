@@ -1,6 +1,7 @@
 package com.example.notification.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -8,7 +9,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.notification.dto.NotificationResponse;
 import com.example.notification.exception.NotificationBadRequestException;
-import com.example.notification.service.PushNotificationService;
+import com.example.notification.service.NotificationChannel;
+import com.example.notification.service.NotificationService;
+import com.example.notification.service.NotificationServiceRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -20,7 +24,14 @@ import org.springframework.test.web.servlet.MockMvc;
 class PushControllerTest {
 
   @Autowired private MockMvc mockMvc;
-  @MockitoBean private PushNotificationService pushNotificationService;
+  @MockitoBean private NotificationServiceRegistry notificationServiceRegistry;
+  private NotificationService pushNotificationService;
+
+  @BeforeEach
+  void setUp() {
+    pushNotificationService = mock(NotificationService.class);
+    when(notificationServiceRegistry.get(NotificationChannel.PUSH)).thenReturn(pushNotificationService);
+  }
 
   @Test
   void returnsSentResponseWhenServiceSucceeds() throws Exception {
