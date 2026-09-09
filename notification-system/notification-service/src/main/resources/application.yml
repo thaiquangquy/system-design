@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: notification-service
+  datasource:
+    url: jdbc:h2:mem:notifications;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+notification:
+  provider:
+    push:
+      endpoint: ${PUSH_PROVIDER_ENDPOINT:http://localhost:9001/push}
+      api-key: ${PUSH_PROVIDER_API_KEY:stub-push-key}
+    sms:
+      endpoint: ${SMS_PROVIDER_ENDPOINT:http://localhost:9002/sms}
+      api-key: ${SMS_PROVIDER_API_KEY:stub-sms-key}
+    email:
+      endpoint: ${EMAIL_PROVIDER_ENDPOINT:http://localhost:9003/email}
+      api-key: ${EMAIL_PROVIDER_API_KEY:stub-email-key}
