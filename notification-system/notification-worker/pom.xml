@@ -35,6 +35,15 @@
             <artifactId>spring-boot-starter-kafka</artifactId>
         </dependency>
         <dependency>
+            <!-- spring-kafka's JsonDeserializer/ErrorHandlingDeserializer still target Jackson 2
+                 (com.fasterxml.jackson.core), while Spring Boot 4's own Jackson is the Jackson 3
+                 tools.jackson.core artifacts. Referencing those deserializer classes directly in
+                 code (KafkaConsumerConfig) requires this on the compile classpath. -->
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.21.5</version>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.48</version>
