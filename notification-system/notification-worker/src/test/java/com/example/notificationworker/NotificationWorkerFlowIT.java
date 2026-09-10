@@ -61,16 +61,14 @@ class NotificationWorkerFlowIT {
     void consumesPushEventAndCallsProvider() {
         when(pushProvider.send(any())).thenReturn(SendResult.success("stub-push-1"));
 
-        var event = new NotificationEvent(
-                UUID.randomUUID(),
-                NotificationChannel.PUSH,
-                1L,
-                "Hello",
-                "Hi there",
-                null,
-                null,
-                null,
-                List.of(new NotificationEvent.DeviceTarget("device-token-1", Platform.IOS)));
+        var event = NotificationEvent.builder()
+                .notificationId(UUID.randomUUID())
+                .channel(NotificationChannel.PUSH)
+                .userId(1L)
+                .subject("Hello")
+                .content("Hi there")
+                .devices(List.of(new NotificationEvent.DeviceTarget("device-token-1", Platform.IOS)))
+                .build();
 
         producer.send(
                 new ProducerRecord<>("notification.push", event.notificationId().toString(), event));

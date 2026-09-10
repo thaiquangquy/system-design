@@ -31,16 +31,13 @@ public class SmsNotificationService implements NotificationService {
         }
 
         var notificationId = UUID.randomUUID();
-        var event = new NotificationEvent(
-                notificationId,
-                channel(),
-                userId,
-                null,
-                request.firstContentValue(),
-                null,
-                null,
-                contact.phone(),
-                null);
+        var event = NotificationEvent.builder()
+                .notificationId(notificationId)
+                .channel(channel())
+                .userId(userId)
+                .content(request.firstContentValue())
+                .phoneNumber(contact.phone())
+                .build();
         eventProducer.send(event);
 
         return NotificationResponse.queued(notificationId);
