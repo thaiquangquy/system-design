@@ -1,8 +1,9 @@
 package com.example.notificationworker.consumer;
 
-import com.example.notificationworker.messaging.NotificationEvent;
-import com.example.notificationworker.provider.SmsProvider;
-import com.example.notificationworker.provider.SmsSendCommand;
+import com.example.notification.common.messaging.NotificationEvent;
+import com.example.notification.common.messaging.NotificationTopics;
+import com.example.notification.common.provider.SmsProvider;
+import com.example.notification.common.provider.SmsSendCommand;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -15,7 +16,7 @@ public class SmsEventConsumer {
 
     private final SmsProvider smsProvider;
 
-    @KafkaListener(topics = "notification.sms", groupId = "notification-worker")
+    @KafkaListener(topics = NotificationTopics.SMS_TOPIC, groupId = "notification-worker")
     public void onMessage(NotificationEvent event) {
         var result = smsProvider.send(new SmsSendCommand(event.phoneNumber(), event.content()));
         if (!result.success()) {
