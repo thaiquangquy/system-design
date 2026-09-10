@@ -12,7 +12,7 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 import org.springframework.util.StringUtils;
 
 /**
@@ -33,10 +33,10 @@ public class KafkaConsumerConfig {
         }
         configs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
-        configs.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
-        configs.put(JsonDeserializer.VALUE_DEFAULT_TYPE, NotificationEvent.class);
-        configs.put(JsonDeserializer.TRUSTED_PACKAGES, "com.example.notificationworker.messaging");
-        configs.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
+        configs.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JacksonJsonDeserializer.class);
+        configs.put(JacksonJsonDeserializer.VALUE_DEFAULT_TYPE, NotificationEvent.class);
+        configs.put(JacksonJsonDeserializer.TRUSTED_PACKAGES, "com.example.notificationworker.messaging");
+        configs.put(JacksonJsonDeserializer.USE_TYPE_INFO_HEADERS, false);
         return new DefaultKafkaConsumerFactory<>(configs);
     }
 
