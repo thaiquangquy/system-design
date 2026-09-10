@@ -1,9 +1,11 @@
 package com.example.notification.dto;
 
-public record NotificationResponse(SendStatus status, String providerMessageId, String error) {
+import java.util.UUID;
 
-    public static NotificationResponse sent(String providerMessageId) {
-        return new NotificationResponse(SendStatus.SENT, providerMessageId, null);
+public record NotificationResponse(SendStatus status, String notificationId, String error) {
+
+    public static NotificationResponse queued(UUID notificationId) {
+        return new NotificationResponse(SendStatus.QUEUED, notificationId.toString(), null);
     }
 
     public static NotificationResponse failed(String error) {

@@ -1,11 +1,12 @@
 package com.example.notification.service;
 
+import com.example.notification.cache.UserCacheService;
 import com.example.notification.dto.NotificationRequest;
 import com.example.notification.dto.NotificationResponse;
 import com.example.notification.exception.NotificationBadRequestException;
-import com.example.notification.provider.SmsProvider;
-import com.example.notification.provider.SmsSendCommand;
-import com.example.notification.repository.UserRepository;
+import com.example.notification.messaging.NotificationEvent;
+import com.example.notification.messaging.NotificationEventProducer;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,8 +14,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SmsNotificationService implements NotificationService {
 
-    private final UserRepository userRepository;
-    private final SmsProvider smsProvider;
+    private final UserCacheService userCacheService;
+    private final NotificationEventProducer eventProducer;
 
     @Override
     public NotificationChannel channel() {
@@ -24,17 +25,24 @@ public class SmsNotificationService implements NotificationService {
     @Override
     public NotificationResponse send(NotificationRequest request) {
         var userId = request.firstRecipientUserId();
-        var user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new NotificationBadRequestException("User not found: " + userId));
-
-        if (user.getPhone() == null || user.getPhone().isBlank()) {
+        var contact = userCacheService.getUserContact(userId);
+        if (contact.phone() == null || contact.phone().isBlank()) {
             throw new NotificationBadRequestException("User " + userId + " has no phone number on file");
         }
 
-        var result = smsProvider.send(new SmsSendCommand(user.getPhone(), request.firstContentValue()));
-        return result.success()
-                ? NotificationResponse.sent(result.providerMessageId())
-                : NotificationResponse.failed(result.errorMessage());
+        var notificationId = UUID.randomUUID();
+        var event = new NotificationEvent(
+                notificationId,
+                channel(),
+                userId,
+                null,
+                request.firstContentValue(),
+                null,
+                null,
+                contact.phone(),
+                null);
+        eventProducer.send(event);
+
+        return NotificationResponse.queued(notificationId);
     }
 }
