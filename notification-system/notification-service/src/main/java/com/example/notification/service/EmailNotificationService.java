@@ -32,16 +32,15 @@ public class EmailNotificationService implements NotificationService {
 
         var fromEmail = request.from() != null ? request.from().email() : null;
         var notificationId = UUID.randomUUID();
-        var event = new NotificationEvent(
-                notificationId,
-                channel(),
-                userId,
-                request.subject(),
-                request.firstContentValue(),
-                fromEmail,
-                contact.email(),
-                null,
-                null);
+        var event = NotificationEvent.builder()
+                .notificationId(notificationId)
+                .channel(channel())
+                .userId(userId)
+                .subject(request.subject())
+                .content(request.firstContentValue())
+                .fromEmail(fromEmail)
+                .toEmail(contact.email())
+                .build();
         eventProducer.send(event);
 
         return NotificationResponse.queued(notificationId);

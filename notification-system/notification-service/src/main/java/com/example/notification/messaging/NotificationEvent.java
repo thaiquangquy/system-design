@@ -4,12 +4,14 @@ import com.example.notification.domain.Platform;
 import com.example.notification.service.NotificationChannel;
 import java.util.List;
 import java.util.UUID;
+import lombok.Builder;
 
 /**
  * Message published to the per-channel queue at intake time. Carries the recipient contact
  * details resolved from the cache/DB so the worker can call the provider without its own DB
  * dependency. Only the fields relevant to {@code channel} are populated.
  */
+@Builder
 public record NotificationEvent(
         UUID notificationId,
         NotificationChannel channel,

@@ -34,16 +34,14 @@ public class PushNotificationService implements NotificationService {
                 .map(device -> new NotificationEvent.DeviceTarget(device.token(), device.platform()))
                 .toList();
         var notificationId = UUID.randomUUID();
-        var event = new NotificationEvent(
-                notificationId,
-                channel(),
-                userId,
-                request.subject(),
-                request.firstContentValue(),
-                null,
-                null,
-                null,
-                devices);
+        var event = NotificationEvent.builder()
+                .notificationId(notificationId)
+                .channel(channel())
+                .userId(userId)
+                .subject(request.subject())
+                .content(request.firstContentValue())
+                .devices(devices)
+                .build();
         eventProducer.send(event);
 
         return NotificationResponse.queued(notificationId);
