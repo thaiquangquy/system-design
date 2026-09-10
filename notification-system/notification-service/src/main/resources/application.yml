@@ -14,6 +14,12 @@ spring:
     open-in-view: false
   jackson:
     property-naming-strategy: SNAKE_CASE
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:16379}
+  cache:
+    type: redis
 
 notification:
   provider:
