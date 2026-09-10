@@ -7,9 +7,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.notification.common.messaging.NotificationChannel;
 import com.example.notification.dto.NotificationResponse;
 import com.example.notification.exception.NotificationBadRequestException;
-import com.example.notification.service.NotificationChannel;
 import com.example.notification.service.NotificationService;
 import com.example.notification.service.NotificationServiceRegistry;
 import java.util.UUID;

@@ -1,5 +1,6 @@
 package com.example.notification.service;
 
+import com.example.notification.common.messaging.NotificationChannel;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
