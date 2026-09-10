@@ -5,11 +5,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.example.notificationworker.domain.Platform;
-import com.example.notificationworker.messaging.NotificationChannel;
-import com.example.notificationworker.messaging.NotificationEvent;
-import com.example.notificationworker.provider.PushProvider;
-import com.example.notificationworker.provider.SendResult;
+import com.example.notification.common.domain.Platform;
+import com.example.notification.common.messaging.NotificationChannel;
+import com.example.notification.common.messaging.NotificationEvent;
+import com.example.notification.common.messaging.NotificationTopics;
+import com.example.notification.common.provider.PushProvider;
+import com.example.notification.common.provider.SendResult;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -70,8 +71,8 @@ class NotificationWorkerFlowIT {
                 .devices(List.of(new NotificationEvent.DeviceTarget("device-token-1", Platform.IOS)))
                 .build();
 
-        producer.send(
-                new ProducerRecord<>("notification.push", event.notificationId().toString(), event));
+        producer.send(new ProducerRecord<>(
+                NotificationTopics.PUSH_TOPIC, event.notificationId().toString(), event));
         producer.flush();
 
         await().atMost(Duration.ofSeconds(10))

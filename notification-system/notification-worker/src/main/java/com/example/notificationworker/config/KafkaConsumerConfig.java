@@ -1,6 +1,6 @@
 package com.example.notificationworker.config;
 
-import com.example.notificationworker.messaging.NotificationEvent;
+import com.example.notification.common.messaging.NotificationEvent;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -35,7 +35,7 @@ public class KafkaConsumerConfig {
         configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         configs.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JacksonJsonDeserializer.class);
         configs.put(JacksonJsonDeserializer.VALUE_DEFAULT_TYPE, NotificationEvent.class);
-        configs.put(JacksonJsonDeserializer.TRUSTED_PACKAGES, "com.example.notificationworker.messaging");
+        configs.put(JacksonJsonDeserializer.TRUSTED_PACKAGES, "com.example.notification.common.messaging");
         configs.put(JacksonJsonDeserializer.USE_TYPE_INFO_HEADERS, false);
         return new DefaultKafkaConsumerFactory<>(configs);
     }
