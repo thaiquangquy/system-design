@@ -52,7 +52,9 @@ services:
       start_period: 15s
 
   notification-service-1:
-    build: ./notification-service
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_HOST: postgres:5432
@@ -77,7 +79,9 @@ services:
       start_period: 30s
 
   notification-service-2:
-    build: ./notification-service
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_HOST: postgres:5432
@@ -102,7 +106,9 @@ services:
       start_period: 30s
 
   notification-worker:
-    build: ./notification-worker
+    build:
+      context: .
+      dockerfile: notification-worker/Dockerfile
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
