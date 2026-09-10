@@ -1,8 +1,8 @@
 package com.example.notification.controller;
 
+import com.example.notification.common.messaging.NotificationChannel;
 import com.example.notification.dto.NotificationRequest;
 import com.example.notification.dto.NotificationResponse;
-import com.example.notification.service.NotificationChannel;
 import com.example.notification.service.NotificationServiceRegistry;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -1,10 +1,11 @@
 package com.example.notification.service;
 
 import com.example.notification.cache.UserCacheService;
+import com.example.notification.common.messaging.NotificationChannel;
+import com.example.notification.common.messaging.NotificationEvent;
 import com.example.notification.dto.NotificationRequest;
 import com.example.notification.dto.NotificationResponse;
 import com.example.notification.exception.NotificationBadRequestException;
-import com.example.notification.messaging.NotificationEvent;
 import com.example.notification.messaging.NotificationEventProducer;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

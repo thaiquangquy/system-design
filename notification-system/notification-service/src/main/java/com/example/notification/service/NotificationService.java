@@ -1,5 +1,6 @@
 package com.example.notification.service;
 
+import com.example.notification.common.messaging.NotificationChannel;
 import com.example.notification.dto.NotificationRequest;
 import com.example.notification.dto.NotificationResponse;
 

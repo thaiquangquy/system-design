@@ -5,8 +5,9 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.example.notification.common.domain.Platform;
+import com.example.notification.common.messaging.NotificationTopics;
 import com.example.notification.domain.Device;
-import com.example.notification.domain.Platform;
 import com.example.notification.domain.User;
 import com.example.notification.dto.NotificationResponse;
 import com.example.notification.dto.SendStatus;
@@ -87,7 +88,8 @@ class NotificationFlowIT {
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "test-" + System.nanoTime());
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         consumer = new KafkaConsumer<>(props);
-        consumer.subscribe(List.of("notification.push", "notification.sms", "notification.email"));
+        consumer.subscribe(
+                List.of(NotificationTopics.PUSH_TOPIC, NotificationTopics.SMS_TOPIC, NotificationTopics.EMAIL_TOPIC));
     }
 
     @AfterEach
@@ -105,7 +107,7 @@ class NotificationFlowIT {
 
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
             var records = consumer.poll(Duration.ofMillis(500));
-            assertThat(records.records("notification.push"))
+            assertThat(records.records(NotificationTopics.PUSH_TOPIC))
                     .anySatisfy(record -> assertThat(record.value())
                             .contains(response.getBody().notificationId()));
         });

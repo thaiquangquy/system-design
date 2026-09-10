@@ -1,6 +1,6 @@
 package com.example.notification.config;
 
-import com.example.notification.messaging.NotificationEvent;
+import com.example.notification.common.messaging.NotificationEvent;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;

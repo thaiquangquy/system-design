@@ -1,6 +1,6 @@
 package com.example.notification.cache;
 
-import com.example.notification.domain.Platform;
+import com.example.notification.common.domain.Platform;
 import java.util.List;
 
 /** Cache-aside projection of the user/device data a {@code NotificationService} needs to send. */
