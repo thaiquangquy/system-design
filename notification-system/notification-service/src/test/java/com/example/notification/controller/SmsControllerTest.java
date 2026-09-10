@@ -12,6 +12,7 @@ import com.example.notification.exception.NotificationBadRequestException;
 import com.example.notification.service.NotificationChannel;
 import com.example.notification.service.NotificationService;
 import com.example.notification.service.NotificationServiceRegistry;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,8 +39,9 @@ class SmsControllerTest {
     }
 
     @Test
-    void returnsSentResponseWhenServiceSucceeds() throws Exception {
-        when(smsNotificationService.send(any())).thenReturn(NotificationResponse.sent("msg-1"));
+    void returnsQueuedResponseWhenServiceSucceeds() throws Exception {
+        var notificationId = UUID.randomUUID();
+        when(smsNotificationService.send(any())).thenReturn(NotificationResponse.queued(notificationId));
 
         mockMvc.perform(post("/v1/notifications/sms")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -49,9 +51,9 @@ class SmsControllerTest {
                       "content": [{"type": "text/plain", "value": "Hi there"}]
                     }
                     """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SENT"))
-                .andExpect(jsonPath("$.provider_message_id").value("msg-1"));
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.status").value("QUEUED"))
+                .andExpect(jsonPath("$.notification_id").value(notificationId.toString()));
     }
 
     @Test
