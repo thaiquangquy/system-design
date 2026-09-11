@@ -1,0 +1,54 @@
+### Notification System — Docker demo requests
+### Prereq: docker compose up --build
+### All requests go through nginx (localhost:8080), which load-balances across
+### notification-service-1 and notification-service-2.
+
+@baseUrl = http://localhost:8080
+
+### Health check (either service instance behind nginx)
+GET {{baseUrl}}/actuator/health
+
+
+### Send an email notification
+POST {{baseUrl}}/v1/notifications/email
+Content-Type: application/json
+
+{
+  "to": [{ "userId": 1 }],
+  "from": { "email": "no-reply@example.com" },
+  "subject": "Welcome to the platform",
+  "content": [{ "type": "text/plain", "value": "Hi there, thanks for signing up!" }]
+}
+
+
+### Send an SMS notification
+POST {{baseUrl}}/v1/notifications/sms
+Content-Type: application/json
+
+{
+  "to": [{ "userId": 1 }],
+  "content": [{ "type": "text/plain", "value": "Your verification code is 123456" }]
+}
+
+
+### Send a push notification
+POST {{baseUrl}}/v1/notifications/push
+Content-Type: application/json
+
+{
+  "to": [{ "userId": 1 }],
+  "subject": "New message",
+  "content": [{ "type": "text/plain", "value": "You have a new message waiting" }]
+}
+
+
+### Validation error — empty recipient list (expect 400)
+POST {{baseUrl}}/v1/notifications/email
+Content-Type: application/json
+
+{
+  "to": [],
+  "from": { "email": "no-reply@example.com" },
+  "subject": "Missing recipients",
+  "content": [{ "type": "text/plain", "value": "This should fail validation" }]
+}
