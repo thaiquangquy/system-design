@@ -11,16 +11,16 @@ public class KafkaTopicConfig {
 
     @Bean
     public NewTopic pushTopic() {
-        return TopicBuilder.name(NotificationTopics.PUSH_TOPIC).build();
+        return TopicBuilder.name(NotificationTopics.PUSH).build();
     }
 
     @Bean
     public NewTopic smsTopic() {
-        return TopicBuilder.name(NotificationTopics.SMS_TOPIC).build();
+        return TopicBuilder.name(NotificationTopics.SMS).build();
     }
 
     @Bean
     public NewTopic emailTopic() {
-        return TopicBuilder.name(NotificationTopics.EMAIL_TOPIC).build();
+        return TopicBuilder.name(NotificationTopics.EMAIL).build();
     }
 }
