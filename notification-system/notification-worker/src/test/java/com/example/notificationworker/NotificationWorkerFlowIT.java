@@ -72,7 +72,7 @@ class NotificationWorkerFlowIT {
                 .build();
 
         producer.send(new ProducerRecord<>(
-                NotificationTopics.PUSH_TOPIC, event.notificationId().toString(), event));
+                NotificationTopics.PUSH, event.notificationId().toString(), event));
         producer.flush();
 
         await().atMost(Duration.ofSeconds(10))

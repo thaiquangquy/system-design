@@ -14,11 +14,11 @@ public class NotificationEventProducer {
 
     private static final Map<NotificationChannel, String> TOPIC_BY_CHANNEL = Map.of(
             NotificationChannel.PUSH,
-            NotificationTopics.PUSH_TOPIC,
+            NotificationTopics.PUSH,
             NotificationChannel.SMS,
-            NotificationTopics.SMS_TOPIC,
+            NotificationTopics.SMS,
             NotificationChannel.EMAIL,
-            NotificationTopics.EMAIL_TOPIC);
+            NotificationTopics.EMAIL);
 
     private final KafkaTemplate<String, NotificationEvent> kafkaTemplate;
 

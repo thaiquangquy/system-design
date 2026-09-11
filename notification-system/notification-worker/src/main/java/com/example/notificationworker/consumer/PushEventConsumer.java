@@ -16,7 +16,7 @@ public class PushEventConsumer {
 
     private final PushProvider pushProvider;
 
-    @KafkaListener(topics = NotificationTopics.PUSH_TOPIC, groupId = "notification-worker")
+    @KafkaListener(topics = NotificationTopics.PUSH, groupId = "notification-worker")
     public void onMessage(NotificationEvent event) {
         for (var device : event.devices()) {
             var command = new PushSendCommand(device.token(), device.platform(), event.subject(), event.content());

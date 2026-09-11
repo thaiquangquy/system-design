@@ -16,7 +16,7 @@ public class SmsEventConsumer {
 
     private final SmsProvider smsProvider;
 
-    @KafkaListener(topics = NotificationTopics.SMS_TOPIC, groupId = "notification-worker")
+    @KafkaListener(topics = NotificationTopics.SMS, groupId = "notification-worker")
     public void onMessage(NotificationEvent event) {
         var result = smsProvider.send(new SmsSendCommand(event.phoneNumber(), event.content()));
         if (!result.success()) {

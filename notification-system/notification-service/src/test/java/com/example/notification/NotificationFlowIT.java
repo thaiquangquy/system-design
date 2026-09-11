@@ -89,7 +89,7 @@ class NotificationFlowIT {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         consumer = new KafkaConsumer<>(props);
         consumer.subscribe(
-                List.of(NotificationTopics.PUSH_TOPIC, NotificationTopics.SMS_TOPIC, NotificationTopics.EMAIL_TOPIC));
+                List.of(NotificationTopics.PUSH, NotificationTopics.SMS, NotificationTopics.EMAIL));
     }
 
     @AfterEach
@@ -107,7 +107,7 @@ class NotificationFlowIT {
 
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
             var records = consumer.poll(Duration.ofMillis(500));
-            assertThat(records.records(NotificationTopics.PUSH_TOPIC))
+            assertThat(records.records(NotificationTopics.PUSH))
                     .anySatisfy(record -> assertThat(record.value())
                             .contains(response.getBody().notificationId()));
         });
