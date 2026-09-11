@@ -2,10 +2,8 @@ package com.example.notification.common.provider;
 
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 /** Logs the payload and fakes a provider response. Swap for a real SMS gateway client later. */
-@Component
 @Slf4j
 public class StubSmsProvider implements SmsProvider {
 
