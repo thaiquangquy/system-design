@@ -4,6 +4,11 @@ server:
 spring:
   application:
     name: notification-service
+  jackson:
+    # Request/response bodies use snake_case (user_id, notification_id, template_id, ...) per
+    # spec.md; this was previously unset, silently 400ing every "user_id" field (pre-existing
+    # bug, confirmed against the pre-Phase-3 code - not introduced by this phase).
+    property-naming-strategy: SNAKE_CASE
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost:25432}/${DB_NAME:notifications}
     username: ${DB_USER:notifications}
