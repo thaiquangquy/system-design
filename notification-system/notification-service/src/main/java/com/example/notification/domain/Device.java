@@ -1,5 +1,6 @@
 package com.example.notification.domain;
 
+import com.example.notification.common.domain.Platform;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

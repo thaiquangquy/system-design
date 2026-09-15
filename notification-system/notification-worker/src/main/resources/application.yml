@@ -1,0 +1,12 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: notification-worker
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:19092}
+    # Consumer key/value deserializers are set in KafkaConsumerConfig, not here.
+    consumer:
+      group-id: notification-worker
+      auto-offset-reset: earliest
